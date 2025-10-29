@@ -1,47 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { User } from '../types';
-import { XIcon, MicrophoneIcon, VideoCameraIcon } from './icons';
+import React from 'react';
+import { XIcon, MicrophoneIcon, VideoCameraIcon, PhoneIcon } from './icons';
 
 interface VideoCallModalProps {
-    user: User;
     onClose: () => void;
 }
 
-const VideoCallModal: React.FC<VideoCallModalProps> = ({ user, onClose }) => {
-    const [isMuted, setIsMuted] = useState(false);
-    const [isVideoOff, setIsVideoOff] = useState(false);
-    const [status, setStatus] = useState('Connecting...');
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setStatus('Ringing...');
-        }, 2000);
-        return () => clearTimeout(timer);
-    }, []);
-
+const VideoCallModal: React.FC<VideoCallModalProps> = ({ onClose }) => {
     return (
-        <div className="fixed inset-0 bg-gray-900 z-[200] flex flex-col items-center justify-between p-8 animate-modal-fade-in text-white">
-            <div className="text-center">
-                <p className="text-lg font-semibold">{status}</p>
-                <h1 className="text-4xl font-bold mt-2">{user.name}</h1>
-            </div>
+        <div className="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center animate-modal-fade-in" onClick={onClose}>
+            <div className="bg-gray-900 text-white rounded-2xl shadow-xl w-full max-w-4xl h-[90vh] m-4 flex flex-col overflow-hidden animate-modal-content-in" onClick={e => e.stopPropagation()}>
+                <div className="p-4 flex justify-between items-center">
+                    <p className="font-semibold">Video Call with TechInnovator</p>
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-800"><XIcon className="w-5 h-5"/></button>
+                </div>
 
-            <div className="relative">
-                <img src={user.avatar} className="w-48 h-48 rounded-full shadow-2xl" />
-                <div className="absolute inset-0 rounded-full border-4 border-orange-500 animate-pulse-radar"></div>
-            </div>
+                <div className="flex-grow bg-black rounded-lg relative m-2">
+                    {/* Remote Video */}
+                    <img src="https://picsum.photos/id/1005/800/600" className="w-full h-full object-cover rounded-lg"/>
+                    <p className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 text-sm rounded">TechInnovator</p>
+                    
+                    {/* Local Video */}
+                    <div className="bg-black rounded-lg absolute bottom-4 right-4 w-1/4 h-1/4 border-2 border-white/50 overflow-hidden">
+                         <img src="https://picsum.photos/id/1005/300/200" className="w-full h-full object-cover"/>
+                         <p className="absolute bottom-1 left-1 bg-black/50 px-1 text-xs rounded">You</p>
+                    </div>
+                </div>
 
-            <div className="flex items-center space-x-6">
-                <button onClick={() => setIsMuted(!isMuted)} className={`w-16 h-16 rounded-full flex items-center justify-center transition-colors ${isMuted ? 'bg-red-500' : 'bg-white/20'}`}>
-                    <MicrophoneIcon className={`w-8 h-8 ${isMuted ? 'text-white' : ''}`} />
-                    {isMuted && <div className="absolute w-1 h-16 bg-red-500 transform rotate-45"></div>}
-                </button>
-                 <button onClick={() => setIsVideoOff(!isVideoOff)} className={`w-16 h-16 rounded-full flex items-center justify-center transition-colors ${isVideoOff ? 'bg-gray-500' : 'bg-white/20'}`}>
-                    <VideoCameraIcon className={`w-8 h-8 ${isVideoOff ? 'text-white' : ''}`} />
-                </button>
-                <button onClick={onClose} className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center">
-                    <XIcon className="w-8 h-8" />
-                </button>
+                <div className="bg-gray-800/50 p-4 flex justify-center items-center space-x-6">
+                    <button className="p-3 bg-gray-700 rounded-full hover:bg-gray-600"><MicrophoneIcon className="w-6 h-6"/></button>
+                    <button className="p-3 bg-gray-700 rounded-full hover:bg-gray-600"><VideoCameraIcon className="w-6 h-6"/></button>
+                    <button onClick={onClose} className="p-4 bg-red-600 rounded-full hover:bg-red-700"><PhoneIcon className="w-7 h-7"/></button>
+                </div>
             </div>
         </div>
     );

@@ -1,34 +1,39 @@
+
 export interface User {
-  id: number;
-  name: string;
-  handle: string;
-  avatar: string;
-  reputation?: number;
-  rank?: string;
-  isCommunityVerified?: boolean;
-  skillBadges?: { name: string; icon: string }[];
+    id: number;
+    name: string;
+    handle: string;
+    avatar: string;
+    banner?: string;
+    bio?: string;
+    location?: string;
+    website?: string;
+    joinedDate?: string;
+    stats?: {
+        following: number;
+        followers: number;
+    };
+    isCommunityVerified?: boolean;
+    skillBadges?: { name: string; icon: string }[];
+    reputation?: number;
+    rank?: string;
 }
 
-export interface Trend {
-  category: string;
-  topic: string;
-  posts: string;
-  imageUrl?: string;
+export interface Post {
+    id: number;
+    user: User;
+    content: string;
+    imageUrl?: string;
+    timestamp: string;
+    stats: {
+        likes: number;
+        comments: number;
+        shares: number;
+    };
+    isLiked: boolean;
+    topics?: string[];
+    comments?: Comment[];
 }
-
-export enum PostContentType {
-  TEXT = 'TEXT',
-  IMAGE = 'IMAGE',
-  VIDEO = 'VIDEO',
-  POLL = 'POLL',
-}
-
-export interface PollOption {
-  text: string;
-  votes: number;
-}
-
-export type PostVisibility = 'public' | 'friends' | 'premium';
 
 export interface Comment {
     id: number;
@@ -37,42 +42,20 @@ export interface Comment {
     timestamp: string;
 }
 
-export interface Post {
-  id: number;
-  user: User;
-  timestamp: string;
-  content: string;
-  contentType: PostContentType;
-  mediaUrl?: string;
-  pollOptions?: PollOption[];
-  visibility: PostVisibility[];
-  impactScore: number;
-  comments: Comment[];
-  commentsCount: number;
-  likesCount: number;
-  sharesCount: number;
-  isLiked: boolean; // Is the post liked by the current user
-  expiresAt?: Date;
-  collaborator?: User;
-  topics?: string[];
-}
-
 export interface Story {
-  id: number;
-  user: {
-    name: string;
-    avatar: string;
-  };
-  imageUrl: string;
-  type?: 'image' | 'voice';
+    id: number;
+    user: {
+        name: string;
+        avatar: string;
+    };
+    imageUrl: string;
+    type?: 'image' | 'voice';
 }
 
-export interface MarketplaceItem {
-    id: number;
-    name: string;
-    seller: string;
-    priceUSD: number;
-    priceCoins: number;
+export interface Trend {
+    category: string;
+    topic: string;
+    posts: string;
     imageUrl: string;
 }
 
@@ -100,6 +83,15 @@ export interface LocalRoom {
     isLocked: boolean;
 }
 
+export interface AdCampaign {
+    id: number;
+    name: string;
+    status: 'Active' | 'Ended' | 'Draft';
+    budget: number;
+    impressions: number;
+    clicks: number;
+}
+
 export interface Reel {
     id: number;
     user: User;
@@ -108,29 +100,31 @@ export interface Reel {
     views: number;
 }
 
-export interface AdCampaign {
-    id: number;
-    name: string;
-    status: 'Active' | 'Paused' | 'Ended';
-    budget: number; // in coins
-    impressions: number;
-    clicks: number;
-}
-
 export interface Notification {
     id: number;
-    type: 'like' | 'comment' | 'follow' | 'mention' | 'system';
-    actor: User;
-    post_id?: number;
-    content_preview?: string;
-    created_at: string;
-    read_status: boolean;
+    type: 'follow' | 'like' | 'comment' | 'mention' | 'system';
+    user?: User;
+    post?: {
+        id: number;
+        excerpt: string;
+    };
+    content?: string;
+    timestamp: string;
+    isRead: boolean;
+}
+
+export interface Conversation {
+    id: number;
+    user: User;
+    lastMessage: string;
+    timestamp: string;
+    unreadCount: number;
+    isOnline: boolean;
 }
 
 export interface Message {
     id: number;
-    sender_id: number;
+    sender: 'me' | 'them';
     content: string;
-    created_at: string;
-    reply_to?: string;
+    timestamp: string;
 }

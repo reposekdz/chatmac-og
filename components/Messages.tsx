@@ -1,161 +1,105 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { SearchIcon, MoreIcon, SpeakerWaveIcon, VideoCameraIcon, PaperAirplaneIcon, PaperclipIcon, MicrophoneIcon, EmojiHappyIcon, ReplyIcon } from './icons';
-import { User, Message } from '../types';
-import { loggedInUser } from '../App';
+import React, { useState } from 'react';
+import { Conversation, Message } from '../types';
+import { SearchIcon, PaperAirplaneIcon, MoreIcon, VideoCameraIcon } from './icons';
 
-interface Conversation {
-    user: User;
-    lastMessage: string;
-    time: string;
-    unread: number;
+const conversationData: Conversation[] = [
+    { id: 1, user: { id: 3, name: 'TechInnovator', handle: '@techguru', avatar: 'https://picsum.photos/id/1005/50/50' }, lastMessage: 'Yeah, I think that could work. Let\'s sync up tomorrow.', timestamp: '5m ago', unreadCount: 2, isOnline: true },
+    { id: 2, user: { id: 4, name: 'ArtfulAdventures', handle: '@creativecanvas', avatar: 'https://picsum.photos/id/1011/50/50' }, lastMessage: 'Just sent you the final design!', timestamp: '1h ago', unreadCount: 0, isOnline: false },
+    { id: 3, user: { id: 2, name: 'FoodieFiesta', handle: '@tastytreats', avatar: 'https://picsum.photos/id/1025/50/50' }, lastMessage: 'You have to try this new ramen place.', timestamp: 'yesterday', unreadCount: 0, isOnline: true },
+];
+
+const messageData: { [key: number]: Message[] } = {
+    1: [
+        { id: 1, sender: 'them', content: 'Hey, did you see the latest framework updates?', timestamp: '10:30 AM' },
+        { id: 2, sender: 'me', content: 'Not yet, been swamped. Anything major?', timestamp: '10:31 AM' },
+        { id: 3, sender: 'them', content: 'Yeah, I think that could work. Let\'s sync up tomorrow.', timestamp: '10:35 AM' },
+    ],
+    2: [
+        { id: 1, sender: 'them', content: 'Just sent you the final design!', timestamp: '9:15 AM' }
+    ]
+};
+
+interface MessagesProps {
+  openVideoCall: () => void;
 }
 
-const Messages: React.FC<{ onStartVideoCall: (user: User) => void }> = ({ onStartVideoCall }) => {
-    const [conversations, setConversations] = useState<Conversation[]>([]);
-    const [selectedUser, setSelectedUser] = useState<User | null>(null);
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [newMessage, setNewMessage] = useState('');
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+const Messages: React.FC<MessagesProps> = ({ openVideoCall }) => {
+    const [activeConversation, setActiveConversation] = useState<Conversation | null>(conversationData[0]);
 
-    useEffect(() => {
-        // Fetch conversations list
-        const fetchConversations = async () => {
-            try {
-                const res = await fetch(`/api/conversations?userId=${loggedInUser.id}`);
-                const data = await res.json();
-                setConversations(data);
-                if (data.length > 0) {
-                    setSelectedUser(data[0].user);
-                }
-            } catch (e) {
-                console.error("Failed to fetch conversations", e);
-            }
-        };
-        fetchConversations();
-    }, []);
-
-    useEffect(() => {
-        // Fetch messages for the selected conversation
-        const fetchMessages = async () => {
-            if (selectedUser) {
-                try {
-                    const res = await fetch(`/api/conversations/${selectedUser.id}?userId=${loggedInUser.id}`);
-                    const data = await res.json();
-                    setMessages(data);
-                } catch (e) {
-                    console.error("Failed to fetch messages", e);
-                }
-            }
-        };
-        fetchMessages();
-    }, [selectedUser]);
-
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
-
-    const handleSendMessage = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newMessage.trim() || !selectedUser) return;
-
-        const optimisticMessage: Message = {
-            id: Date.now(),
-            sender_id: loggedInUser.id,
-            content: newMessage,
-            created_at: new Date().toISOString()
-        };
-        setMessages(prev => [...prev, optimisticMessage]);
-        setNewMessage('');
-        
-        try {
-            const res = await fetch(`/api/conversations/${selectedUser.id}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ senderId: loggedInUser.id, content: newMessage })
-            });
-            const actualMessage = await res.json();
-            setMessages(prev => prev.map(m => m.id === optimisticMessage.id ? actualMessage : m));
-        } catch (error) {
-            console.error("Failed to send message", error);
-            // Revert optimistic update
-            setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
-        }
-    };
+    if (!activeConversation) {
+        return (
+             <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 card h-[calc(100vh-10rem)] flex items-center justify-center">
+                <p>Select a conversation to start messaging.</p>
+            </div>
+        )
+    }
 
     return (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 card h-[calc(100vh-7rem)] flex">
-            {/* Conversations List */}
-            <div className="w-full md:w-1/3 border-r border-gray-200 dark:border-gray-800 flex flex-col">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 card h-[calc(100vh-10rem)] flex">
+            {/* Conversation List */}
+            <div className="w-1/3 border-r border-gray-200 dark:border-gray-800 flex flex-col">
                 <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-                    <h2 className="text-xl font-bold">Messages</h2>
-                    <div className="relative mt-2">
-                        <SearchIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"/>
-                        <input type="text" placeholder="Search messages" className="w-full bg-gray-100 dark:bg-gray-800 rounded-full pl-10 pr-4 py-1.5 text-sm"/>
+                    <h1 className="text-xl font-bold">Messages</h1>
+                </div>
+                <div className="p-2">
+                     <div className="relative">
+                        <SearchIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input type="text" placeholder="Search messages" className="w-full bg-gray-100 dark:bg-gray-800 rounded-full pl-10 pr-4 py-2 text-sm"/>
                     </div>
                 </div>
                 <div className="flex-grow overflow-y-auto">
-                    {conversations.map(conv => (
-                        <button key={conv.user.id} onClick={() => setSelectedUser(conv.user)} className={`w-full text-left flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 ${selectedUser?.id === conv.user.id ? 'bg-orange-50 dark:bg-orange-900/20' : ''}`}>
+                    {conversationData.map(convo => (
+                        <button key={convo.id} onClick={() => setActiveConversation(convo)} className={`w-full flex items-center space-x-3 p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-800 ${activeConversation.id === convo.id ? 'bg-orange-50 dark:bg-orange-900/20' : ''}`}>
                             <div className="relative">
-                                <img src={conv.user.avatar} alt={conv.user.name} className="w-12 h-12 rounded-full"/>
+                               <img src={convo.user.avatar} className="w-12 h-12 rounded-full"/>
+                               {convo.isOnline && <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-900"></div>}
                             </div>
-                            <div className="flex-1 overflow-hidden">
-                                <div className="flex justify-between items-center">
-                                    <p className="font-bold text-sm">{conv.user.name}</p>
-                                    <p className="text-xs text-gray-400">{conv.time}</p>
-                                </div>
-                                <div className="flex justify-between items-start mt-1">
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate pr-2">{conv.lastMessage}</p>
-                                    {conv.unread > 0 && <span className="bg-orange-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">{conv.unread}</span>}
-                                </div>
+                            <div className="flex-grow overflow-hidden">
+                                <p className="font-bold">{convo.user.name}</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{convo.lastMessage}</p>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                                <p className="text-xs text-gray-400">{convo.timestamp}</p>
+                                {convo.unreadCount > 0 && <div className="mt-1 w-5 h-5 bg-orange-500 text-white text-xs rounded-full flex items-center justify-center ml-auto">{convo.unreadCount}</div>}
                             </div>
                         </button>
                     ))}
                 </div>
             </div>
-
-            {/* Chat View */}
-            <div className="hidden md:flex w-2/3 flex-col">
-                {selectedUser ? (
-                    <>
-                    <div className="p-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                             <img src={selectedUser.avatar} alt={selectedUser.name} className="w-10 h-10 rounded-full"/>
-                             <div>
-                                <p className="font-bold">{selectedUser.name}</p>
-                             </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                             <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><SpeakerWaveIcon className="w-5 h-5"/></button>
-                             <button onClick={() => onStartVideoCall(selectedUser)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><VideoCameraIcon className="w-5 h-5"/></button>
-                             <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><MoreIcon className="w-5 h-5"/></button>
-                        </div>
+            {/* Active Chat */}
+            <div className="w-2/3 flex flex-col">
+                 <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
+                    <div>
+                        <p className="font-bold">{activeConversation.user.name}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{activeConversation.user.handle}</p>
                     </div>
-
-                    <div className="flex-grow p-4 space-y-4 overflow-y-auto">
-                        {messages.map((msg) => (
-                            <div key={msg.id} className={`flex items-end gap-2 ${msg.sender_id === loggedInUser.id ? 'justify-end' : 'justify-start'}`}>
-                                {msg.sender_id !== loggedInUser.id && <img src={selectedUser.avatar} className="w-6 h-6 rounded-full"/>}
-                                <div className={`max-w-xs md:max-w-md p-3 rounded-2xl ${msg.sender_id === loggedInUser.id ? 'bg-orange-500 text-white rounded-br-none' : 'bg-gray-100 dark:bg-gray-800 rounded-bl-none'}`}>
-                                    <p className="text-sm">{msg.content}</p>
-                                </div>
+                    <div className="flex items-center space-x-2">
+                        <button onClick={openVideoCall} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"><VideoCameraIcon className="w-6 h-6"/></button>
+                        <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"><MoreIcon className="w-6 h-6"/></button>
+                    </div>
+                </div>
+                <div className="flex-grow p-4 overflow-y-auto flex flex-col-reverse">
+                    <div className="space-y-4">
+                    {(messageData[activeConversation.id] || []).map(msg => (
+                        <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-xs lg:max-w-md p-3 rounded-2xl ${msg.sender === 'me' ? 'bg-orange-500 text-white rounded-br-none' : 'bg-gray-100 dark:bg-gray-800 rounded-bl-none'}`}>
+                                <p>{msg.content}</p>
                             </div>
-                        ))}
-                        <div ref={messagesEndRef} />
+                        </div>
+                    ))}
                     </div>
-
-                    <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-                         <form onSubmit={handleSendMessage} className="bg-gray-100 dark:bg-gray-800 rounded-full flex items-center px-2">
-                            <input type="text" placeholder="Type a message..." value={newMessage} onChange={e => setNewMessage(e.target.value)} className="flex-grow bg-transparent focus:ring-0 border-none text-sm"/>
-                            <button type="submit" className="p-2 bg-orange-500 text-white rounded-full"><PaperAirplaneIcon className="w-5 h-5"/></button>
-                        </form>
+                </div>
+                 <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+                    <div className="relative">
+                        <input type="text" placeholder="Type a message..." className="w-full bg-gray-100 dark:bg-gray-800 rounded-full pl-4 pr-12 py-3 text-sm"/>
+                        <button className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-orange-500 text-white rounded-full">
+                            <PaperAirplaneIcon className="w-6 h-6"/>
+                        </button>
                     </div>
-                    </>
-                ) : (
-                    <div className="flex-grow flex items-center justify-center text-gray-500">Select a conversation to start chatting.</div>
-                )}
+                </div>
             </div>
         </div>
-    )
-}
+    );
+};
+
 export default Messages;

@@ -1,36 +1,40 @@
 import React from 'react';
-import { HomeIcon, ExploreIcon, MessagesIcon, MoreIcon, PlusCircleIcon } from './icons';
+import { HomeIcon, ExploreIcon, MessagesIcon, NotificationsIcon, PlusCircleIcon } from './icons';
 import { View } from '../App';
 
 interface BottomNavProps {
-    activeView: View;
     setView: (view: View) => void;
-    openCreatePostModal: () => void;
-    openNavMenu: () => void;
+    activeView: View;
 }
 
-const NavItem: React.FC<{ view: View, label: string, icon: React.ElementType, active: boolean, onClick: () => void }> = ({ view, label, icon: Icon, active, onClick }) => (
-    <button onClick={onClick} className={`flex flex-col items-center justify-center w-full transition-colors ${active ? 'text-orange-500' : 'text-gray-500 dark:text-gray-400'}`}>
-        <Icon className="w-6 h-6" />
-        <span className="text-[10px] font-semibold mt-1">{label}</span>
-    </button>
-);
-
-const BottomNav: React.FC<BottomNavProps> = ({ activeView, setView, openCreatePostModal, openNavMenu }) => {
+const BottomNav: React.FC<BottomNavProps> = ({ setView, activeView }) => {
+    const navItems = [
+        { view: 'home', icon: HomeIcon },
+        { view: 'explore', icon: ExploreIcon },
+        { view: 'create', icon: PlusCircleIcon, isCentral: true },
+        { view: 'messages', icon: MessagesIcon },
+        { view: 'notifications', icon: NotificationsIcon },
+    ];
+    
     return (
-        <div className="fixed bottom-0 left-0 right-0 h-20 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 z-50 flex items-center justify-around px-2 lg:hidden">
-            <NavItem view="home" label="Home" icon={HomeIcon} active={activeView === 'home'} onClick={() => setView('home')} />
-            <NavItem view="explore" label="Explore" icon={ExploreIcon} active={activeView === 'explore'} onClick={() => setView('explore')} />
-
-            <button onClick={openCreatePostModal} className="w-16 h-16 -mt-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white shadow-lg animate-pulse-subtle">
-                <PlusCircleIcon className="w-8 h-8"/>
-            </button>
-
-            <NavItem view="messages" label="Messages" icon={MessagesIcon} active={activeView === 'messages'} onClick={() => setView('messages')} />
-            <button onClick={openNavMenu} className={`flex flex-col items-center justify-center w-full text-gray-500 dark:text-gray-400`}>
-                <MoreIcon className="w-6 h-6" />
-                <span className="text-[10px] font-semibold mt-1">More</span>
-            </button>
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 shadow-t-lg z-50">
+            <div className="flex justify-around items-center h-16">
+                {navItems.map(item => (
+                    <button 
+                        key={item.view} 
+                        onClick={() => setView(item.view as View)}
+                        className={`p-2 rounded-full transition-colors ${item.isCentral ? '-mt-8' : ''}`}
+                    >
+                        {item.isCentral ? (
+                            <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-3 rounded-full text-white shadow-lg">
+                                <item.icon className="w-8 h-8"/>
+                            </div>
+                        ) : (
+                             <item.icon className={`w-7 h-7 ${activeView === item.view ? 'text-orange-500' : 'text-gray-500 dark:text-gray-400'}`}/>
+                        )}
+                    </button>
+                ))}
+            </div>
         </div>
     );
 };
