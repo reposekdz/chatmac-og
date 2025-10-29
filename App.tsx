@@ -16,9 +16,13 @@ import Events from './components/Events';
 import Groups from './components/Groups';
 import Settings from './components/Settings';
 import AdsManager from './components/AdsManager';
-import { CollectionIcon, MessagesIcon, TicketIcon, XIcon, SpeakerWaveIcon, VideoCameraIcon } from './components/icons';
+import ReelsPage from './components/ReelsPage';
+import Explore from './components/Explore';
+import Notifications from './components/Notifications';
+import Messages from './components/Messages';
+import { CollectionIcon, MessagesIcon, TicketIcon, XIcon, SpeakerWaveIcon, VideoCameraIcon, PaperAirplaneIcon, PaperclipIcon, MicrophoneIcon, EmojiHappyIcon, ReplyIcon, DotsHorizontalIcon } from './components/icons';
 
-export type View = 'home' | 'explore' | 'notifications' | 'messages' | 'bookmarks' | 'profile' | 'marketplace' | 'challenges' | 'journey' | 'rooms' | 'stage' | 'creatorhub' | 'events' | 'groups' | 'discovery' | 'settings' | 'geotimeline' | 'ads';
+export type View = 'home' | 'explore' | 'notifications' | 'messages' | 'bookmarks' | 'profile' | 'marketplace' | 'challenges' | 'journey' | 'rooms' | 'stage' | 'creatorhub' | 'events' | 'groups' | 'discovery' | 'settings' | 'geotimeline' | 'ads' | 'reels';
 export type Theme = 'light' | 'dark' | 'retro';
 export type ProfileMode = 'public' | 'private' | 'work' | 'stealth';
 export type Mood = 'default' | 'chill' | 'focus' | 'hype';
@@ -86,6 +90,14 @@ const App: React.FC = () => {
     switch (view) {
       case 'home':
         return <MainContent addCoins={addCoins} isAntiToxic={isAntiToxic} profileMode={profileMode} />;
+      case 'explore':
+        return <Explore />;
+      case 'reels':
+        return <ReelsPage />;
+      case 'notifications':
+        return <Notifications />;
+      case 'messages':
+        return <Messages />;
       case 'profile':
         return <Profile setView={setView} />;
       case 'geotimeline':
@@ -179,7 +191,7 @@ const App: React.FC = () => {
       {/* Real-Time Multichat Overlay */}
       <div className="fixed bottom-0 right-4 flex items-end space-x-4 z-50">
           {activeChats.map(chat => (
-            <div key={chat.id} className="w-80 h-96 bg-white dark:bg-gray-900 rounded-t-2xl shadow-2xl border border-gray-200 dark:border-gray-800 flex flex-col card">
+            <div key={chat.id} className="w-80 h-[28rem] bg-white dark:bg-gray-900 rounded-t-2xl shadow-2xl border border-gray-200 dark:border-gray-800 flex flex-col card">
               <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-800">
                 <div className="flex items-center space-x-2">
                   <img src={chat.avatar} className="w-8 h-8 rounded-full" alt={chat.name}/>
@@ -193,11 +205,32 @@ const App: React.FC = () => {
                    </button>
                  </div>
               </div>
-              <div className="flex-grow p-2 text-center text-sm text-gray-400">
-                Chat placeholder...
+              <div className="flex-grow p-3 space-y-3 overflow-y-auto">
+                 {/* Example messages */}
+                  <div className="flex justify-start">
+                    <div className="bg-gray-100 dark:bg-gray-800 p-2.5 rounded-2xl rounded-bl-none max-w-xs text-sm">Hey, how's it going?</div>
+                  </div>
+                   <div className="flex justify-end">
+                    <div className="bg-orange-500 text-white p-2.5 rounded-2xl rounded-br-none max-w-xs text-sm">Pretty good! Just working on the new designs.</div>
+                  </div>
+                   <div className="flex justify-start">
+                     <div className="bg-gray-100 dark:bg-gray-800 p-2.5 rounded-2xl rounded-bl-none max-w-xs text-sm">
+                        <div className="border-l-2 border-orange-300 pl-2 text-xs opacity-80 mb-1">
+                           Replying to "Pretty good!..."
+                        </div>
+                        Nice! Can't wait to see them.
+                     </div>
+                  </div>
+
               </div>
               <div className="p-2 border-t border-gray-200 dark:border-gray-800">
-                <input type="text" placeholder="Type a message..." className="w-full bg-gray-100 dark:bg-gray-800 rounded-full px-3 py-1.5 text-sm" />
+                <div className="bg-gray-100 dark:bg-gray-800 rounded-full flex items-center px-2">
+                    <button className="p-2 text-gray-500 hover:text-orange-500"><PaperclipIcon className="w-5 h-5"/></button>
+                    <button className="p-2 text-gray-500 hover:text-orange-500"><MicrophoneIcon className="w-5 h-5"/></button>
+                    <input type="text" placeholder="Type a message..." className="flex-grow bg-transparent focus:ring-0 border-none text-sm"/>
+                    <button className="p-2 text-gray-500 hover:text-orange-500"><EmojiHappyIcon className="w-5 h-5"/></button>
+                    <button className="p-2 bg-orange-500 text-white rounded-full"><PaperAirplaneIcon className="w-5 h-5"/></button>
+                </div>
               </div>
             </div>
           ))}

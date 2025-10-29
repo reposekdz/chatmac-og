@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import PostCard from './PostCard';
 import CreatePost from './CreatePost';
 import StoryReel from './StoryReel';
-import Reels from './Reels';
 import { Post, PostContentType } from '../types';
 
 const allPosts: Post[] = [
@@ -108,7 +107,6 @@ const MainContent: React.FC<any> = ({addCoins, isAntiToxic, profileMode}) => {
         </div>
       </div>
       <StoryReel />
-      <Reels />
       {filteredPosts.map((post) => (
         <PostCard key={post.id} post={post} addCoins={addCoins} isAntiToxic={isAntiToxic} />
       ))}

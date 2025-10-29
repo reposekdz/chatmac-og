@@ -32,6 +32,17 @@ const AdsManager: React.FC<{ coins: number, setCoins: (c: number | ((prev:number
             </div>
             
             <div>
+                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Performance Overview</h2>
+                <div className="h-64 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center border border-gray-200 dark:border-gray-700">
+                    <div className="text-center">
+                        <ChartBarIcon className="w-12 h-12 text-gray-400 mx-auto"/>
+                        <p className="text-gray-500 font-semibold mt-2">[Campaign Performance Chart Placeholder]</p>
+                        <p className="text-xs text-gray-400">Your ad spend and engagement will be visualized here.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div>
                  <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Your Campaigns</h2>
                  <div className="space-y-3">
                     {campaigns.map(ad => (

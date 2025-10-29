@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Post, PostContentType } from '../types';
 import PostCard from './PostCard';
 import { View } from '../App';
-// FIX: Imported HomeIcon to resolve reference error.
-import { BadgeIcon, QrCodeIcon, MapIcon, AcademicCapIcon, HandThumbUpIcon, StarIcon, CogIcon, TrophyIcon, FireIcon, MarketplaceIcon, BookmarksIcon, HomeIcon } from './icons';
+import { BadgeIcon, QrCodeIcon, MapIcon, AcademicCapIcon, HandThumbUpIcon, StarIcon, CogIcon, TrophyIcon, FireIcon, MarketplaceIcon, BookmarksIcon, CameraIcon, XIcon, FilmIcon } from './icons';
 
 const userPosts: Post[] = [
     {
@@ -17,116 +16,101 @@ const userPosts: Post[] = [
     comments: 2,
     shares: 1,
   },
-]
+];
 
-const ProfileModule: React.FC<{title: string, icon: React.ElementType, children: React.ReactNode, action?: React.ReactNode}> = ({title, icon: Icon, children, action}) => (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 card h-full flex flex-col">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-                <Icon className="w-5 h-5 text-gray-500" />
-                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{title}</h2>
+const badges = [
+    { name: "Day One", description: "You've been with us from the very beginning. Thanks for being a pioneer!", icon: StarIcon, color: "bg-yellow-500" },
+    { name: "Community Helper", description: "Awarded for providing helpful answers and being a positive force in the community.", icon: HandThumbUpIcon, color: "bg-green-500" },
+    { name: "Topic Expert", description: "Recognized for deep knowledge and frequent contributions in a specific topic.", icon: AcademicCapIcon, color: "bg-blue-500" },
+    { name: "Challenge Winner", description: "You conquered a community-wide challenge and came out on top!", icon: TrophyIcon, color: "bg-purple-500" },
+    { name: "Hot Streak", description: "Awarded for posting valuable content for 7 consecutive days.", icon: FireIcon, color: "bg-red-500" }
+];
+
+
+const BadgeModal: React.FC<{ badge: typeof badges[0]; onClose: () => void }> = ({ badge, onClose }) => (
+    <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center animate-modal-fade-in" onClick={onClose}>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-sm m-4 animate-modal-content-in text-center p-8" onClick={e => e.stopPropagation()}>
+            <div className={`w-24 h-24 rounded-full mx-auto flex items-center justify-center ${badge.color}`}>
+                <badge.icon className="w-12 h-12 text-white" />
             </div>
-            {action}
-        </div>
-        <div className="p-4 flex-grow">
-            {children}
+            <h2 className="text-2xl font-bold mt-4">{badge.name}</h2>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">{badge.description}</p>
+            <button onClick={onClose} className="mt-6 bg-orange-500 text-white font-bold py-2 px-6 rounded-full">Got it!</button>
         </div>
     </div>
 );
 
-const Badge: React.FC<{icon: React.ElementType, label: string, color: string}> = ({icon: Icon, label, color}) => (
-    <div className="text-center">
-        <div className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center ${color}`}>
-            <Icon className="w-8 h-8 text-white" />
-        </div>
-        <p className="text-xs font-bold mt-2">{label}</p>
-    </div>
-)
 
-interface ProfileProps {
-    setView: (view: View) => void;
-}
+const Profile: React.FC<{ setView: (view: View) => void; }> = ({ setView }) => {
+  const [activeTab, setActiveTab] = useState('posts');
+  const [selectedBadge, setSelectedBadge] = useState<typeof badges[0] | null>(null);
 
-const Profile: React.FC<ProfileProps> = ({ setView }) => {
   return (
     <div className="flex flex-col space-y-6">
+        {selectedBadge && <BadgeModal badge={selectedBadge} onClose={() => setSelectedBadge(null)} />}
         {/* Profile Header */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 card text-center">
-            <img src="https://picsum.photos/id/1005/150/150" alt="Your Name" className="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-orange-500 shadow-lg"/>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Your Name</h1>
-            <p className="text-gray-500 dark:text-gray-400">@yourhandle</p>
-            <div className="mt-4 flex justify-center items-center space-x-4">
-                 <div className="text-center">
-                    <p className="font-bold text-xl">1.2K</p>
-                    <p className="text-sm text-gray-500">Following</p>
-                 </div>
-                 <div className="text-center">
-                    <p className="font-bold text-xl">5.8K</p>
-                    <p className="text-sm text-gray-500">Followers</p>
-                 </div>
-                 <div className="text-center">
-                    <p className="font-bold text-xl text-orange-500">Master</p>
-                    <p className="text-sm text-gray-500">Rank</p>
-                 </div>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 card overflow-hidden">
+            <div className="h-48 bg-gray-200 dark:bg-gray-800 relative">
+                 <img src="https://picsum.photos/id/1018/1000/300" className="w-full h-full object-cover" />
+                 <button className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-black/80">
+                    <CameraIcon className="w-5 h-5"/>
+                 </button>
+            </div>
+            <div className="p-6 pt-0">
+                <div className="flex justify-between items-end -mt-16">
+                    <div className="relative">
+                        <img src="https://picsum.photos/id/1005/150/150" alt="Your Name" className="w-32 h-32 rounded-full border-4 border-white dark:border-gray-900 shadow-lg"/>
+                        <button className="absolute bottom-2 right-2 bg-black/60 text-white p-1.5 rounded-full hover:bg-black/80">
+                             <CameraIcon className="w-4 h-4"/>
+                        </button>
+                    </div>
+                    <button className="bg-orange-500 text-white font-bold py-2 px-4 rounded-full text-sm">Edit Profile</button>
+                </div>
+                 <div className="mt-4">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Your Name</h1>
+                    <p className="text-gray-500 dark:text-gray-400">@yourhandle</p>
+                    <p className="mt-2 text-sm">Digital Creator | Building cool things with code | Coffee enthusiast ☕</p>
+                </div>
+                 <div className="mt-4 flex items-center space-x-6 border-t border-gray-200 dark:border-gray-800 pt-4">
+                     <div className="text-center"><p className="font-bold text-lg">1.2K</p><p className="text-sm text-gray-500">Following</p></div>
+                     <div className="text-center"><p className="font-bold text-lg">5.8K</p><p className="text-sm text-gray-500">Followers</p></div>
+                     <div className="text-center"><p className="font-bold text-lg text-orange-500">Master</p><p className="text-sm text-gray-500">Rank</p></div>
+                </div>
             </div>
         </div>
-
-        {/* Modular Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="md:col-span-2">
-                <ProfileModule title="Badges" icon={BadgeIcon}>
-                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
-                        <Badge icon={StarIcon} label="Day One" color="bg-yellow-500" />
-                        <Badge icon={HandThumbUpIcon} label="Community Helper" color="bg-green-500" />
-                        <Badge icon={AcademicCapIcon} label="Topic Expert" color="bg-blue-500" />
-                        <Badge icon={TrophyIcon} label="Challenge Winner" color="bg-purple-500" />
-                        <Badge icon={FireIcon} label="Hot Streak" color="bg-red-500" />
-                    </div>
-                </ProfileModule>
-            </div>
-             <ProfileModule title="ChatMac ID" icon={QrCodeIcon} action={<button><CogIcon className="w-5 h-5 text-gray-400"/></button>}>
-                <div className="flex items-center space-x-4">
-                    <QrCodeIcon className="w-24 h-24 text-gray-800 dark:text-gray-200" />
-                    <div>
-                        <h3 className="font-bold">Cross-App Social ID</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Use this universal ID to connect your profile across the entire ChatMac ecosystem.</p>
-                    </div>
-                </div>
-            </ProfileModule>
-            <ProfileModule title="Geo-Timeline" icon={MapIcon} action={<button onClick={() => setView('geotimeline')} className="text-sm font-bold text-orange-500">View Map</button>}>
-                <div className="flex items-center space-x-4">
-                    <MapIcon className="w-12 h-12 text-green-500" />
-                    <div>
-                        <h3 className="font-bold">Your Adventures</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">A map of all your geo-tagged posts. See where you've been!</p>
-                    </div>
-                </div>
-            </ProfileModule>
-             <ProfileModule title="Creator Marketplace" icon={MarketplaceIcon} action={<button className="text-sm font-bold text-orange-500">View Store</button>}>
-                <div className="space-y-2">
-                    <div className="flex items-center space-x-2 text-sm">
-                        <img src="https://picsum.photos/id/1074/50/50" className="w-10 h-10 rounded-lg object-cover" />
-                        <div>
-                            <p className="font-bold">Creator Merch Hoodie</p>
-                            <p className="text-xs text-gray-500">40000 Coins</p>
+        
+        {/* Badges Module */}
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 card">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">Badge Showcase</h2>
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
+                {badges.map(badge => (
+                    <button key={badge.name} onClick={() => setSelectedBadge(badge)} className="text-center group">
+                        <div className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center ${badge.color} transition-transform group-hover:scale-110`}>
+                            <badge.icon className="w-8 h-8 text-white" />
                         </div>
-                    </div>
-                </div>
-            </ProfileModule>
-             <ProfileModule title="Personal Blog" icon={BookmarksIcon} action={<button className="text-sm font-bold text-orange-500">Read More</button>}>
-                 <div>
-                    <h3 className="font-bold">My Journey into Development</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-3">It all started with a single line of code. I was fascinated by how characters on a screen could create entire worlds...</p>
-                </div>
-            </ProfileModule>
+                        <p className="text-xs font-bold mt-2">{badge.name}</p>
+                    </button>
+                ))}
+            </div>
         </div>
 
-        <div className="md:col-span-2">
-            <ProfileModule title="My Posts" icon={HomeIcon}>
-                <div className="flex flex-col space-y-6">
-                    {userPosts.map(post => <PostCard key={post.id} post={post} addCoins={() => {}} isAntiToxic={false} />)}
+
+        {/* Profile Content */}
+        <div>
+            <div className="flex border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-t-2xl px-2 sticky top-20 z-10">
+                <button onClick={() => setActiveTab('posts')} className={`px-4 py-3 text-sm font-semibold ${activeTab === 'posts' ? 'border-b-2 border-orange-500 text-orange-600' : 'text-gray-500'}`}>Posts</button>
+                <button onClick={() => setActiveTab('reels')} className={`px-4 py-3 text-sm font-semibold ${activeTab === 'reels' ? 'border-b-2 border-orange-500 text-orange-600' : 'text-gray-500'}`}>Reels</button>
+                <button onClick={() => setActiveTab('highlights')} className={`px-4 py-3 text-sm font-semibold ${activeTab === 'highlights' ? 'border-b-2 border-orange-500 text-orange-600' : 'text-gray-500'}`}>Highlights</button>
+                <button onClick={() => setActiveTab('media')} className={`px-4 py-3 text-sm font-semibold ${activeTab === 'media' ? 'border-b-2 border-orange-500 text-orange-600' : 'text-gray-500'}`}>Media</button>
+            </div>
+             <div className="bg-white dark:bg-gray-900 rounded-b-2xl shadow-sm border-x border-b border-gray-200 dark:border-gray-800 card">
+                <div>
+                    {activeTab === 'posts' && userPosts.map(post => <PostCard key={post.id} post={post} addCoins={() => {}} isAntiToxic={false} />)}
+                    {activeTab === 'reels' && <div className="text-center py-12 text-gray-500">Your Reels will appear here.</div>}
+                    {activeTab === 'highlights' && <div className="text-center py-12 text-gray-500">Your curated Highlights will appear here.</div>}
+                    {activeTab === 'media' && <div className="text-center py-12 text-gray-500">All your media will appear here.</div>}
                 </div>
-            </ProfileModule>
+            </div>
         </div>
 
     </div>
