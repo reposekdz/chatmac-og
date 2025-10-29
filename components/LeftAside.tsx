@@ -1,5 +1,5 @@
 import React from 'react';
-import { HomeIcon, ExploreIcon, NotificationsIcon, MessagesIcon, BookmarksIcon, ProfileIcon, MarketplaceIcon, TrophyIcon, MapIcon, UsersIcon, SpeakerWaveIcon, MoreIcon, SunIcon, MoonIcon, DesktopComputerIcon, ShieldExclamationIcon, EyeOffIcon, SparklesIcon, ViewBoardsIcon, CloudArrowDownIcon, CogIcon } from './icons';
+import { HomeIcon, ExploreIcon, NotificationsIcon, MessagesIcon, BookmarksIcon, ProfileIcon, MarketplaceIcon, TrophyIcon, MapIcon, UsersIcon, SpeakerWaveIcon, MoreIcon, SunIcon, MoonIcon, DesktopComputerIcon, ShieldExclamationIcon, EyeOffIcon, SparklesIcon, ViewBoardsIcon, CloudArrowDownIcon, CogIcon, FireIcon } from './icons';
 import { View, Theme, Mood } from '../App';
 
 interface NavLinkProps {
@@ -10,7 +10,7 @@ interface NavLinkProps {
 }
 
 const NavLink: React.FC<NavLinkProps> = ({ icon: Icon, label, active, onClick }) => (
-    <button onClick={onClick} className={`flex items-center w-full space-x-4 p-3 rounded-full transition-colors ${active ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'}`}>
+    <button onClick={onClick} className={`flex items-center w-full space-x-4 p-3 rounded-full transition-colors ${active ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-500 dark:text-orange-400 font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'}`}>
         <Icon className="w-7 h-7" />
         <span className="text-lg">{label}</span>
     </button>
@@ -51,6 +51,13 @@ const LeftAside: React.FC<LeftAsideProps> = (props) => {
         { view: 'settings', icon: CogIcon, label: 'Settings' },
     ];
     
+    const moods: { name: Mood, label: string, color: string }[] = [
+        { name: 'default', label: 'Default', color: 'bg-orange-500'},
+        { name: 'chill', label: 'Chill', color: 'bg-blue-500'},
+        { name: 'focus', label: 'Focus', color: 'bg-gray-500'},
+        { name: 'hype', label: 'Hype', color: 'bg-pink-500'},
+    ]
+
     return (
         <div className="sticky top-24 flex flex-col space-y-1">
             {navItems.map(item => (
@@ -71,13 +78,20 @@ const LeftAside: React.FC<LeftAsideProps> = (props) => {
                         <button onClick={() => setTheme('dark')} className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-orange-500 text-white' : 'text-gray-500 dark:text-gray-400'}`}><MoonIcon className="w-5 h-5"/></button>
                         <button onClick={() => setTheme('retro')} className={`p-2 rounded-lg ${theme === 'retro' ? 'bg-orange-500 text-white' : 'text-gray-500 dark:text-gray-400'}`}><DesktopComputerIcon className="w-5 h-5"/></button>
                     </div>
-                     <button onClick={() => {}} className={`w-full flex justify-between items-center p-2 rounded-lg`}>
-                        <div className="flex items-center space-x-2">
-                            <SparklesIcon className="w-5 h-5 text-pink-500" />
-                            <span className="text-sm font-semibold">Mood</span>
+                     <div className="p-2">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                                <SparklesIcon className="w-5 h-5 text-pink-500" />
+                                <span className="text-sm font-semibold">Mood</span>
+                            </div>
+                            <span className="text-sm font-bold text-pink-500 capitalize">{mood}</span>
                         </div>
-                        <span className="text-sm font-bold text-pink-500">{mood}</span>
-                    </button>
+                        <div className="grid grid-cols-4 gap-2">
+                             {moods.map(m => (
+                                <button key={m.name} onClick={() => setMood(m.name)} className={`h-8 rounded-lg ${m.color} ${mood === m.name ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-900 ring-black dark:ring-white' : ''}`}></button>
+                             ))}
+                        </div>
+                    </div>
                  </div>
             </div>
             

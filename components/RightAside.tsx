@@ -1,13 +1,12 @@
-
 import React from 'react';
 import { User, Trend } from '../types';
 import { MoreIcon, StarIcon, ChartBarIcon, TicketIcon, CollectionIcon, SearchCircleIcon } from './icons';
 import { View } from '../App';
 
 const whoToFollowData: User[] = [
-  { name: 'TechInnovator', handle: '@techguru', avatar: 'https://picsum.photos/id/1005/50/50', reputation: 95 },
-  { name: 'ArtfulAdventures', handle: '@creativecanvas', avatar: 'https://picsum.photos/id/1011/50/50', reputation: 88 },
-  { name: 'FoodieFiesta', handle: '@tastytreats', avatar: 'https://picsum.photos/id/1025/50/50', reputation: 92 },
+  { name: 'TechInnovator', handle: '@techguru', avatar: 'https://picsum.photos/id/1005/50/50', reputation: 95, rank: 'Community Pillar' },
+  { name: 'ArtfulAdventures', handle: '@creativecanvas', avatar: 'https://picsum.photos/id/1011/50/50', reputation: 88, rank: 'Creative Voice' },
+  { name: 'FoodieFiesta', handle: '@tastytreats', avatar: 'https://picsum.photos/id/1025/50/50', reputation: 92, rank: 'Expert Contributor' },
 ];
 
 const trendsData: Trend[] = [
@@ -26,32 +25,27 @@ const Card: React.FC<{ title: string; children: React.ReactNode; padding?: boole
           {children}
         </div>
         {showMore && (
-            <a href="#" className="block px-4 py-3 text-sm text-orange-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <a href="#" className="block px-4 py-3 text-sm text-orange-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 Show more
             </a>
         )}
     </div>
 );
 
-const UserCard: React.FC<{user: User}> = ({ user }) => (
+const UserCard: React.FC<{user: User, openChat: (user: any) => void}> = ({ user, openChat }) => (
     <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
             <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full" />
             <div>
                  <div className="flex items-center space-x-1">
                     <p className="font-bold text-sm text-gray-900 dark:text-gray-100">{user.name}</p>
-                    {user.reputation && (
-                        <div className="flex items-center text-xs text-yellow-500" title={`Reputation Score: ${user.reputation}`}>
-                            <StarIcon className="w-3 h-3" />
-                            <span>{user.reputation}</span>
-                        </div>
-                    )}
-                </div>
+                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">{user.handle}</p>
+                 {user.rank && <p className="text-xs font-bold text-orange-500 dark:text-orange-400">{user.rank}</p>}
             </div>
         </div>
-        <button className="bg-orange-500 text-white font-semibold py-1 px-3 rounded-full text-xs hover:bg-orange-600 transition-all retro-button">
-            Follow
+        <button onClick={() => openChat({id: Math.random(), name: user.name, avatar: user.avatar})} className="bg-orange-500 text-white font-semibold py-1 px-3 rounded-full text-xs hover:bg-orange-600 transition-all retro-button">
+            Chat
         </button>
     </div>
 );
@@ -71,9 +65,10 @@ const TrendItem: React.FC<{trend: Trend}> = ({ trend }) => (
 
 interface RightAsideProps {
     setView: (view: View) => void;
+    openChat: (user: any) => void;
 }
 
-const RightAside: React.FC<RightAsideProps> = ({ setView }) => {
+const RightAside: React.FC<RightAsideProps> = ({ setView, openChat }) => {
    const navItems = [
       { name: 'Creator Hub', icon: ChartBarIcon, color: 'text-purple-500 bg-purple-100 dark:bg-purple-900/50', view: 'creatorhub' },
       { name: 'Events', icon: TicketIcon, color: 'text-red-500 bg-red-100 dark:bg-red-900/50', view: 'events' },
@@ -97,10 +92,10 @@ const RightAside: React.FC<RightAsideProps> = ({ setView }) => {
             </div>
       </div>
 
-      <Card title="Who to follow">
+      <Card title="Top Contributors">
         <div className="flex flex-col space-y-3">
             {whoToFollowData.map((user) => (
-                <UserCard key={user.handle} user={user} />
+                <UserCard key={user.handle} user={user} openChat={openChat} />
             ))}
         </div>
       </Card>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { SpeakerWaveIcon, HeartIcon } from './icons';
 
@@ -14,16 +14,45 @@ const listeners: User[] = [
     { name: 'Leo', handle: '@leo_b', avatar: 'https://picsum.photos/id/209/50/50' },
 ]
 
+const FloatingReaction: React.FC<{emoji: string, left: string}> = ({emoji, left}) => (
+    <div className="floating-reaction" style={{ left }}>
+        {emoji}
+    </div>
+);
+
 const OpenStage: React.FC = () => {
+  const [reactions, setReactions] = useState<{id: number, emoji: string, left: string}[]>([]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+        const emojis = ['❤️', '🔥', '💡', '👏', '🚀'];
+        const newReaction = {
+            id: Date.now() + Math.random(),
+            emoji: emojis[Math.floor(Math.random() * emojis.length)],
+            left: `${Math.random() * 80 + 10}%`,
+        };
+        setReactions(prev => [...prev, newReaction]);
+
+        // Clean up old reactions
+        setTimeout(() => {
+            setReactions(prev => prev.filter(r => r.id !== newReaction.id));
+        }, 3000);
+
+    }, 500); // Add a new reaction every 500ms
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 card">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 card relative overflow-hidden">
       <h1 className="text-3xl font-bold mb-1 text-gray-900 dark:text-gray-100">Live Collab Stage</h1>
       <p className="text-gray-600 dark:text-gray-400 mb-6">Topic: The Future of Renewable Energy</p>
       
       {/* Speaker Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Main Speaker */}
-        <div className="md:col-span-3 bg-gradient-to-br from-orange-100 to-amber-200 dark:from-orange-900/50 dark:to-amber-900/50 p-6 rounded-2xl text-center">
+        <div className="relative md:col-span-3 bg-gradient-to-br from-orange-100 to-amber-200 dark:from-orange-800/50 dark:to-amber-800/50 p-6 rounded-2xl text-center">
+            <div className="absolute top-2 left-2 text-xs font-bold bg-white/50 px-2 py-0.5 rounded-full">HOST</div>
             <img src={mainSpeaker.avatar} alt={mainSpeaker.name} className="w-24 h-24 rounded-full mx-auto mb-2 border-4 border-white" />
             <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{mainSpeaker.name}</h2>
             <p className="text-orange-600 dark:text-orange-400 font-semibold">{mainSpeaker.handle}</p>
@@ -35,13 +64,14 @@ const OpenStage: React.FC = () => {
 
         {/* Co-speakers */}
         {coSpeakers.map(speaker => (
-             <div key={speaker.handle} className="bg-gray-100 dark:bg-gray-800/50 p-4 rounded-2xl text-center">
+             <div key={speaker.handle} className="relative bg-gray-100 dark:bg-gray-800/50 p-4 rounded-2xl text-center">
+                <div className="absolute top-2 left-2 text-xs font-bold bg-white/50 px-2 py-0.5 rounded-full">CO-HOST</div>
                 <img src={speaker.avatar} alt={speaker.name} className="w-16 h-16 rounded-full mx-auto mb-2 border-2 border-white" />
                 <h2 className="font-bold text-gray-900 dark:text-gray-100">{speaker.name}</h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{speaker.handle}</p>
              </div>
         ))}
-         <div className="bg-gray-100 dark:bg-gray-800/50 p-4 rounded-2xl text-center flex items-center justify-center">
+         <div className="bg-gray-100 dark:bg-gray-800/50 p-4 rounded-2xl text-center flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-700">
             <button className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500 text-3xl">+</button>
         </div>
       </div>
@@ -65,6 +95,11 @@ const OpenStage: React.FC = () => {
          <button className="bg-blue-500 text-white font-bold py-2 px-5 rounded-full hover:bg-blue-600 transition-colors retro-button">
             Request to Speak
         </button>
+      </div>
+      
+      {/* Floating Reactions Container */}
+      <div className="absolute bottom-20 left-0 right-0 h-48 pointer-events-none">
+        {reactions.map(r => <FloatingReaction key={r.id} emoji={r.emoji} left={r.left} />)}
       </div>
 
     </div>

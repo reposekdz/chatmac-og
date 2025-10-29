@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Post, PostContentType, User, PostVisibility } from '../types';
-import { HeartIcon, ChatBubbleIcon, ShareIcon, MoreIcon, ClockIcon, ShieldCheckIcon, BadgeIcon, SwordsIcon, GlobeAltIcon, UserGroupIcon, StarIcon, FireIcon, ArrowTrendingUpIcon, MicrophoneIcon } from './icons';
+import { HeartIcon, ChatBubbleIcon, ShareIcon, MoreIcon, ClockIcon, ShieldCheckIcon, BadgeIcon, SwordsIcon, GlobeAltIcon, UserGroupIcon, StarIcon, FireIcon, ArrowTrendingUpIcon, MicrophoneIcon, PlusCircleIcon } from './icons';
 
 const PostCard: React.FC<{ post: Post; addCoins: (amount: number) => void, isAntiToxic: boolean }> = ({ post, addCoins, isAntiToxic }) => {
   const [liked, setLiked] = useState(false);
@@ -126,7 +126,7 @@ const PostCard: React.FC<{ post: Post; addCoins: (amount: number) => void, isAnt
 
       {post.battle && (
         <div className="mt-4">
-            <button onClick={() => setShowBattle(!showBattle)} className="w-full text-center p-2 font-bold text-orange-600 dark:text-orange-400 flex items-center justify-center space-x-2">
+            <button onClick={() => setShowBattle(!showBattle)} className="w-full text-center p-2 font-bold text-orange-500 dark:text-orange-400 flex items-center justify-center space-x-2">
                 <SwordsIcon className="w-5 h-5" />
                 <span>Thread Battle</span>
             </button>
@@ -159,6 +159,9 @@ const PostCard: React.FC<{ post: Post; addCoins: (amount: number) => void, isAnt
             </div>
         </div>
          <div className="flex items-center space-x-4">
+            <button onClick={() => alert('Multi-Post Merge feature allows you to remix this post with your own content!')} className="flex items-center space-x-2 hover:text-purple-500 transition-colors" title="Remix Post">
+                <PlusCircleIcon className="w-6 h-6" />
+            </button>
             <button onClick={() => addCoins(2)} className="flex items-center space-x-2 hover:text-blue-500 transition-colors">
               <ChatBubbleIcon className="w-6 h-6" />
               <span className="text-sm font-semibold">{post.comments}</span>
@@ -170,9 +173,14 @@ const PostCard: React.FC<{ post: Post; addCoins: (amount: number) => void, isAnt
         </div>
       </div>
        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center space-x-2">
-                <MicrophoneIcon className="w-6 h-6 text-gray-400"/>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Voice conversations are coming soon!</p>
+            <div className="flex items-center space-x-3 bg-gray-100 dark:bg-gray-800 p-2 rounded-lg">
+                <button className="p-2 bg-orange-200 dark:bg-orange-500/50 rounded-full text-orange-600 dark:text-orange-200">
+                    <MicrophoneIcon className="w-6 h-6"/>
+                </button>
+                <div className="flex-grow h-8 bg-gray-200 dark:bg-gray-700 rounded-full relative overflow-hidden">
+                    <div className="absolute top-0 left-0 h-full w-1/2 bg-orange-400 dark:bg-orange-500/80 animate-pulse"></div>
+                    <p className="absolute inset-0 flex items-center px-3 text-sm font-semibold text-gray-600 dark:text-gray-300">Listen to voice thread...</p>
+                </div>
             </div>
        </div>
     </div>

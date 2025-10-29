@@ -1,6 +1,6 @@
 import React from 'react';
 import { Story } from '../types';
-import { MicrophoneIcon } from './icons';
+import { MicrophoneIcon, ReplyIcon } from './icons';
 
 const storyData: Story[] = [
   { id: 1, user: { name: 'You', avatar: 'https://picsum.photos/id/1005/50/50' }, imageUrl: 'https://picsum.photos/id/1005/200/300', type: 'image' },
@@ -17,6 +17,14 @@ const StoryCard: React.FC<{ story: Story, isFirst?: boolean }> = ({ story, isFir
     <div className={`flex-shrink-0 w-28 h-48 rounded-2xl overflow-hidden relative group cursor-pointer shadow-md ${isVoice ? 'bg-gradient-to-br from-purple-500 to-indigo-600' : ''}`}>
         {!isVoice && <img src={story.imageUrl} alt={story.user.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+        
+        {!isFirst && (
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={() => alert('Reply to this story!')} className="p-1.5 bg-black/50 rounded-full text-white hover:bg-white hover:text-black">
+                    <ReplyIcon className="w-4 h-4" />
+                </button>
+            </div>
+        )}
 
         {isVoice && (
             <div className="w-full h-full flex flex-col items-center justify-center text-white">

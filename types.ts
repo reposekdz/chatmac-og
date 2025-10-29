@@ -3,6 +3,7 @@ export interface User {
   handle: string;
   avatar: string;
   reputation?: number;
+  rank?: string;
   isCommunityVerified?: boolean;
   skillBadges?: { name: string; icon: string }[];
 }
