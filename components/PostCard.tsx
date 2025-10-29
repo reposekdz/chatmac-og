@@ -1,33 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { Post, PostContentType, User, PostVisibility } from '../types';
-import { HeartIcon, ChatBubbleIcon, ShareIcon, MoreIcon, ClockIcon, ShieldCheckIcon, BadgeIcon, SwordsIcon, GlobeAltIcon, UserGroupIcon, StarIcon, FireIcon, ArrowTrendingUpIcon, MicrophoneIcon, PlusCircleIcon } from './icons';
+import { HeartIcon, ChatBubbleIcon, ShareIcon, MoreIcon, ClockIcon, ShieldCheckIcon, BadgeIcon, SwordsIcon, GlobeAltIcon, UserGroupIcon, StarIcon, FireIcon, ArrowTrendingUpIcon, MicrophoneIcon, PlusCircleIcon, XIcon, RocketLaunchIcon } from './icons';
+
+const Modal: React.FC<{ title: string, children: React.ReactNode, onClose: () => void }> = ({ title, children, onClose }) => (
+    <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center animate-modal-fade-in" onClick={onClose}>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-md m-4 animate-modal-content-in" onClick={e => e.stopPropagation()}>
+            <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
+                <h2 className="text-xl font-bold">{title}</h2>
+                <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"><XIcon className="w-5 h-5"/></button>
+            </div>
+            <div className="p-6">{children}</div>
+        </div>
+    </div>
+);
 
 const PostCard: React.FC<{ post: Post; addCoins: (amount: number) => void, isAntiToxic: boolean }> = ({ post, addCoins, isAntiToxic }) => {
-  const [liked, setLiked] = useState(false);
-  const [timeLeft, setTimeLeft] = useState('');
-  const [showBattle, setShowBattle] = useState(post.battle?.isActive || false);
+  const [impactScore, setImpactScore] = useState(post.impactScore);
+  const [reactions, setReactions] = useState({love: false, fire: false, trend: false});
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const [showRemixModal, setShowRemixModal] = useState(false);
+  const [showPromoteModal, setShowPromoteModal] = useState(false);
 
-  useEffect(() => {
-    if (post.expiresAt) {
-      const interval = setInterval(() => {
-        const now = new Date();
-        const diff = post.expiresAt!.getTime() - now.getTime();
-        if (diff <= 0) {
-          setTimeLeft('Expired');
-          clearInterval(interval);
-        } else {
-          const hours = Math.floor(diff / (1000 * 60 * 60));
-          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-          setTimeLeft(`${hours}h ${minutes}m left`);
-        }
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [post.expiresAt]);
-  
-  const handleLike = () => {
-    setLiked(!liked);
-    if (!liked) addCoins(5); // Add 5 coins for a like
+  const handleReaction = (type: 'love' | 'fire' | 'trend') => {
+      setReactions(prev => {
+          const wasActive = prev[type];
+          const scoreChange = wasActive ? -1 : 1;
+          let multiplier = 1;
+          if (type === 'fire') multiplier = 5;
+          if (type === 'trend') multiplier = 10;
+          
+          setImpactScore(prevScore => prevScore + (scoreChange * multiplier));
+          if (!wasActive) addCoins(1);
+
+          return {...prev, [type]: !wasActive};
+      });
   }
   
   const applyAntiToxicFilter = (text: string) => {
@@ -90,7 +96,6 @@ const PostCard: React.FC<{ post: Post; addCoins: (amount: number) => void, isAnt
               <div className="flex items-center space-x-1.5">
                   <p className="font-bold text-gray-900 dark:text-gray-100">{user.name}</p>
                   {user.isCommunityVerified && <ShieldCheckIcon className="w-5 h-5 text-blue-500" title="Community Verified" />}
-                  {user.skillBadges?.map(badge => <BadgeIcon key={badge.name} className="w-5 h-5 text-purple-500" title={badge.name} />)}
               </div>
               <div className="flex items-center space-x-2">
                 <p className="text-sm text-gray-500 dark:text-gray-400">{user.handle} &middot; {post.timestamp}</p>
@@ -103,63 +108,72 @@ const PostCard: React.FC<{ post: Post; addCoins: (amount: number) => void, isAnt
   );
 
   return (
+    <>
+    {showVoiceModal && <Modal title="Threaded Voice Conversation" onClose={() => setShowVoiceModal(false)}>
+        <div className="text-center">
+            <p className="text-gray-600 dark:text-gray-400 mb-4">This feature allows for audio-only comment threads. Press record to leave a voice reply.</p>
+            <button className="w-24 h-24 bg-red-500 text-white rounded-full flex items-center justify-center mx-auto transition-transform hover:scale-105 active:scale-95">
+                <MicrophoneIcon className="w-10 h-10"/>
+            </button>
+            <p className="mt-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Tap to Record</p>
+        </div>
+    </Modal>}
+
+    {showRemixModal && <Modal title="Multi-Post Merge" onClose={() => setShowRemixModal(false)}>
+        <div>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">Remix this post by adding your own content. It will be displayed as a collaboration.</p>
+            <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-4 space-y-4">
+                <div className="opacity-70"><PostCard post={post} addCoins={()=>{}} isAntiToxic={isAntiToxic} /></div>
+                <div className="text-center font-bold text-2xl">+</div>
+                <textarea className="w-full bg-gray-100 dark:bg-gray-800 rounded-lg p-2" placeholder="Add your text, image, or video..."></textarea>
+            </div>
+            <button className="mt-4 w-full bg-orange-500 text-white font-bold py-2 rounded-lg">Publish Remix</button>
+        </div>
+    </Modal>}
+
+    {showPromoteModal && <Modal title="Promote Post" onClose={() => setShowPromoteModal(false)}>
+        <div className="text-center">
+            <p className="text-gray-600 dark:text-gray-400 mb-4">Use your coins to boost this post's visibility across the platform.</p>
+            <div className="flex items-center justify-center space-x-2 my-4">
+                <RocketLaunchIcon className="w-8 h-8 text-orange-500" />
+                <input type="range" min="100" max="5000" step="100" defaultValue="1000" className="w-full" />
+            </div>
+            <p className="text-lg font-bold">Spend <span className="text-orange-500">1000</span> Coins</p>
+            <button className="mt-4 w-full bg-orange-500 text-white font-bold py-2 rounded-lg">Confirm & Promote</button>
+        </div>
+    </Modal>}
+    
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 card">
       <div className="flex items-start justify-between">
-        <div className="flex -space-x-4">
-          <UserInfo user={post.user} />
-          {post.collaborator && <div className="pl-6"><UserInfo user={post.collaborator} /></div>}
+        <UserInfo user={post.user} />
+        <div className="relative group">
+            <button className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
+                <MoreIcon className="w-6 h-6"/>
+            </button>
+             <div className="absolute top-full right-0 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg w-48 hidden group-hover:block z-10">
+                <button onClick={() => setShowPromoteModal(true)} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2">
+                    <RocketLaunchIcon className="w-4 h-4" /><span>Promote Post</span>
+                </button>
+            </div>
         </div>
-        <button className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
-            <MoreIcon className="w-6 h-6"/>
-        </button>
       </div>
-
-      {post.expiresAt && (
-        <div className="mt-2 flex items-center space-x-2 text-sm text-blue-500 font-semibold bg-blue-50 dark:bg-blue-900/30 rounded-full px-3 py-1 w-fit">
-            <ClockIcon className="w-4 h-4" />
-            <span>{timeLeft}</span>
-        </div>
-      )}
 
       <p className="mt-4 text-gray-800 dark:text-gray-200 text-base leading-relaxed">{applyAntiToxicFilter(post.content)}</p>
       {renderContent()}
 
-      {post.battle && (
-        <div className="mt-4">
-            <button onClick={() => setShowBattle(!showBattle)} className="w-full text-center p-2 font-bold text-orange-500 dark:text-orange-400 flex items-center justify-center space-x-2">
-                <SwordsIcon className="w-5 h-5" />
-                <span>Thread Battle</span>
-            </button>
-            {showBattle && (
-                <div className="mt-2 border-t-2 border-dashed border-gray-300 dark:border-gray-700 pt-4 flex space-x-4">
-                    <div className="flex-1 text-center p-3 bg-red-50 dark:bg-red-900/30 rounded-lg">
-                        <p className="font-bold">{post.battle.sideA.user.name}</p>
-                        <p className="text-sm italic">"{applyAntiToxicFilter(post.battle.sideA.text)}"</p>
-                        <button className="mt-2 bg-red-500 text-white px-3 py-1 rounded-full text-sm">{post.battle.sideA.votes} Votes</button>
-                    </div>
-                    <div className="flex-1 text-center p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                        <p className="font-bold">{post.battle.sideB.user.name}</p>
-                        <p className="text-sm italic">"{applyAntiToxicFilter(post.battle.sideB.text)}"</p>
-                        <button className="mt-2 bg-blue-500 text-white px-3 py-1 rounded-full text-sm">{post.battle.sideB.votes} Votes</button>
-                    </div>
-                </div>
-            )}
-        </div>
-      )}
-
       <div className="mt-6 flex items-center justify-between text-gray-500 dark:text-gray-400">
         <div className="flex items-center space-x-4">
-            <button className="flex items-center space-x-2 hover:text-red-500 transition-colors"><HeartIcon className="w-6 h-6" /></button>
-            <button className="flex items-center space-x-2 hover:text-orange-500 transition-colors"><FireIcon className="w-6 h-6" /></button>
-            <button className="flex items-center space-x-2 hover:text-green-500 transition-colors"><ArrowTrendingUpIcon className="w-6 h-6" /></button>
+            <button onClick={() => handleReaction('love')} className={`flex items-center space-x-2 transition-colors duration-200 ${reactions.love ? 'text-red-500' : 'hover:text-red-500'}`}><HeartIcon className="w-6 h-6" /></button>
+            <button onClick={() => handleReaction('fire')} className={`flex items-center space-x-2 transition-colors duration-200 ${reactions.fire ? 'text-orange-500' : 'hover:text-orange-500'}`}><FireIcon className="w-6 h-6" /></button>
+            <button onClick={() => handleReaction('trend')} className={`flex items-center space-x-2 transition-colors duration-200 ${reactions.trend ? 'text-green-500' : 'hover:text-green-500'}`}><ArrowTrendingUpIcon className="w-6 h-6" /></button>
             <div className="flex items-center space-x-1 text-sm font-semibold">
                 <span>🔥</span>
-                <span>{post.impactScore.toLocaleString()}</span>
+                <span>{impactScore.toLocaleString()}</span>
                 <span>Impact</span>
             </div>
         </div>
          <div className="flex items-center space-x-4">
-            <button onClick={() => alert('Multi-Post Merge feature allows you to remix this post with your own content!')} className="flex items-center space-x-2 hover:text-purple-500 transition-colors" title="Remix Post">
+            <button onClick={() => setShowRemixModal(true)} className="flex items-center space-x-2 hover:text-purple-500 transition-colors" title="Remix Post">
                 <PlusCircleIcon className="w-6 h-6" />
             </button>
             <button onClick={() => addCoins(2)} className="flex items-center space-x-2 hover:text-blue-500 transition-colors">
@@ -174,7 +188,7 @@ const PostCard: React.FC<{ post: Post; addCoins: (amount: number) => void, isAnt
       </div>
        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-3 bg-gray-100 dark:bg-gray-800 p-2 rounded-lg">
-                <button className="p-2 bg-orange-200 dark:bg-orange-500/50 rounded-full text-orange-600 dark:text-orange-200">
+                <button onClick={() => setShowVoiceModal(true)} className="p-2 bg-orange-200 dark:bg-orange-500/50 rounded-full text-orange-600 dark:text-orange-200">
                     <MicrophoneIcon className="w-6 h-6"/>
                 </button>
                 <div className="flex-grow h-8 bg-gray-200 dark:bg-gray-700 rounded-full relative overflow-hidden">
@@ -184,6 +198,7 @@ const PostCard: React.FC<{ post: Post; addCoins: (amount: number) => void, isAnt
             </div>
        </div>
     </div>
+    </>
   );
 };
 

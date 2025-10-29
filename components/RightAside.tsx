@@ -92,7 +92,7 @@ const RightAside: React.FC<RightAsideProps> = ({ setView, openChat }) => {
             </div>
       </div>
 
-      <Card title="Top Contributors">
+      <Card title="Who to Follow / Top Contributors">
         <div className="flex flex-col space-y-3">
             {whoToFollowData.map((user) => (
                 <UserCard key={user.handle} user={user} openChat={openChat} />

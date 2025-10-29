@@ -51,6 +51,7 @@ export interface Post {
   expiresAt?: Date;
   collaborator?: User;
   battle?: ThreadBattle;
+  topics?: string[];
 }
 
 export interface Story {
@@ -94,4 +95,21 @@ export interface LocalRoom {
     description: string;
     members: number;
     isLocked: boolean;
+}
+
+export interface Reel {
+    id: number;
+    user: User;
+    videoUrl: string;
+    caption: string;
+    views: number;
+}
+
+export interface AdCampaign {
+    id: number;
+    name: string;
+    status: 'Active' | 'Paused' | 'Ended';
+    budget: number; // in coins
+    impressions: number;
+    clicks: number;
 }

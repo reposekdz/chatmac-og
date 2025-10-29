@@ -2,8 +2,8 @@ import React from 'react';
 import { Post, PostContentType } from '../types';
 import PostCard from './PostCard';
 import { View } from '../App';
-// FIX: Import TrophyIcon and FireIcon
-import { BadgeIcon, QrCodeIcon, MapIcon, AcademicCapIcon, HandThumbUpIcon, StarIcon, CogIcon, TrophyIcon, FireIcon } from './icons';
+// FIX: Imported HomeIcon to resolve reference error.
+import { BadgeIcon, QrCodeIcon, MapIcon, AcademicCapIcon, HandThumbUpIcon, StarIcon, CogIcon, TrophyIcon, FireIcon, MarketplaceIcon, BookmarksIcon, HomeIcon } from './icons';
 
 const userPosts: Post[] = [
     {
@@ -19,13 +19,16 @@ const userPosts: Post[] = [
   },
 ]
 
-const ProfileModule: React.FC<{title: string, children: React.ReactNode, action?: React.ReactNode}> = ({title, children, action}) => (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 card">
+const ProfileModule: React.FC<{title: string, icon: React.ElementType, children: React.ReactNode, action?: React.ReactNode}> = ({title, icon: Icon, children, action}) => (
+    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 card h-full flex flex-col">
         <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{title}</h2>
+            <div className="flex items-center space-x-2">
+                <Icon className="w-5 h-5 text-gray-500" />
+                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{title}</h2>
+            </div>
             {action}
         </div>
-        <div className="p-4">
+        <div className="p-4 flex-grow">
             {children}
         </div>
     </div>
@@ -71,7 +74,7 @@ const Profile: React.FC<ProfileProps> = ({ setView }) => {
         {/* Modular Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-                <ProfileModule title="Badges">
+                <ProfileModule title="Badges" icon={BadgeIcon}>
                     <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
                         <Badge icon={StarIcon} label="Day One" color="bg-yellow-500" />
                         <Badge icon={HandThumbUpIcon} label="Community Helper" color="bg-green-500" />
@@ -81,16 +84,16 @@ const Profile: React.FC<ProfileProps> = ({ setView }) => {
                     </div>
                 </ProfileModule>
             </div>
-             <ProfileModule title="ChatMac ID" action={<button><CogIcon className="w-5 h-5 text-gray-400"/></button>}>
+             <ProfileModule title="ChatMac ID" icon={QrCodeIcon} action={<button><CogIcon className="w-5 h-5 text-gray-400"/></button>}>
                 <div className="flex items-center space-x-4">
                     <QrCodeIcon className="w-24 h-24 text-gray-800 dark:text-gray-200" />
                     <div>
                         <h3 className="font-bold">Cross-App Social ID</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Use this universal ID to connect your profile across the entire ChatMac ecosystem, including Marketplace and Events apps.</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Use this universal ID to connect your profile across the entire ChatMac ecosystem.</p>
                     </div>
                 </div>
             </ProfileModule>
-            <ProfileModule title="Geo-Timeline" action={<button onClick={() => setView('geotimeline')} className="text-sm font-bold text-orange-500">View Map</button>}>
+            <ProfileModule title="Geo-Timeline" icon={MapIcon} action={<button onClick={() => setView('geotimeline')} className="text-sm font-bold text-orange-500">View Map</button>}>
                 <div className="flex items-center space-x-4">
                     <MapIcon className="w-12 h-12 text-green-500" />
                     <div>
@@ -99,14 +102,32 @@ const Profile: React.FC<ProfileProps> = ({ setView }) => {
                     </div>
                 </div>
             </ProfileModule>
+             <ProfileModule title="Creator Marketplace" icon={MarketplaceIcon} action={<button className="text-sm font-bold text-orange-500">View Store</button>}>
+                <div className="space-y-2">
+                    <div className="flex items-center space-x-2 text-sm">
+                        <img src="https://picsum.photos/id/1074/50/50" className="w-10 h-10 rounded-lg object-cover" />
+                        <div>
+                            <p className="font-bold">Creator Merch Hoodie</p>
+                            <p className="text-xs text-gray-500">40000 Coins</p>
+                        </div>
+                    </div>
+                </div>
+            </ProfileModule>
+             <ProfileModule title="Personal Blog" icon={BookmarksIcon} action={<button className="text-sm font-bold text-orange-500">Read More</button>}>
+                 <div>
+                    <h3 className="font-bold">My Journey into Development</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-3">It all started with a single line of code. I was fascinated by how characters on a screen could create entire worlds...</p>
+                </div>
+            </ProfileModule>
         </div>
 
-        {/* Posts Module */}
-        <ProfileModule title="My Posts">
-            <div className="flex flex-col space-y-6">
-                {userPosts.map(post => <PostCard key={post.id} post={post} addCoins={() => {}} isAntiToxic={false} />)}
-            </div>
-        </ProfileModule>
+        <div className="md:col-span-2">
+            <ProfileModule title="My Posts" icon={HomeIcon}>
+                <div className="flex flex-col space-y-6">
+                    {userPosts.map(post => <PostCard key={post.id} post={post} addCoins={() => {}} isAntiToxic={false} />)}
+                </div>
+            </ProfileModule>
+        </div>
 
     </div>
   );
