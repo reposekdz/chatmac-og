@@ -1,0 +1,7 @@
+{
+  "name": "ChatMac",
+  "description": "A modern social media application with a clean, three-column layout, featuring a feed for posts, navigation, and discovery panels. The app is styled with an orange and light theme.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

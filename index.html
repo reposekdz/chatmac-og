@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChatMac</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://aistudiocdn.com/react@^19.2.0",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+        "react/": "https://aistudiocdn.com/react@^19.2.0/"
+      }
+    }
+    </script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+              retro: ['VT323', 'monospace'],
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+      }
+      .retro-mode {
+        font-family: 'VT323', monospace !important;
+        background-color: #C0C0C0 !important;
+        color: #000 !important;
+      }
+      .retro-mode .card, .retro-mode .retro-card {
+        background-color: #C0C0C0 !important;
+        border: 2px solid #000 !important;
+        box-shadow: inset -2px -2px 0 #808080, inset 2px 2px 0 #FFFFFF;
+        border-radius: 0 !important;
+      }
+       .retro-mode h1, .retro-mode h2, .retro-mode h3 {
+        font-weight: normal;
+       }
+       .retro-mode button, .retro-mode .retro-button {
+        border-radius: 0 !important;
+        border: 2px solid #000 !important;
+        box-shadow: inset -1px -1px 0 #000, inset 1px 1px 0 #fff, inset -2px -2px 0 #808080, inset 2px 2px 0 #DFDFDF;
+        background-color: #C0C0C0 !important;
+        color: #000 !important;
+       }
+       .retro-mode button:active, .retro-mode .retro-button:active {
+        box-shadow: inset 1px 1px 0 #000;
+        border: 2px solid #000 !important;
+       }
+       .retro-mode .link {
+        color: #0000FF;
+        text-decoration: underline;
+       }
+       .dark .dark\:bg-gray-950 { background-color: #050505; }
+       .dark .dark\:bg-gray-900 { background-color: #111; }
+       .dark .dark\:border-gray-800 { border-color: #222; }
+       .dark .dark\:text-gray-100 { color: #eee; }
+       .dark .dark\:text-gray-400 { color: #888; }
+
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-950">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
