@@ -33,6 +33,8 @@ export interface ThreadBattle {
   sideB: { user: User; text: string; votes: number };
 }
 
+export type PostVisibility = 'public' | 'friends' | 'premium';
+
 export interface Post {
   id: number;
   user: User;
@@ -41,7 +43,8 @@ export interface Post {
   contentType: PostContentType;
   mediaUrl?: string;
   pollOptions?: PollOption[];
-  likes: number;
+  visibility: PostVisibility[];
+  impactScore: number;
   comments: number;
   shares: number;
   expiresAt?: Date;

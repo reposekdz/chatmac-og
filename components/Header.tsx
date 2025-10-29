@@ -9,6 +9,14 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ profileMode, setProfileMode, coins }) => {
+    
+    const modes: {key: ProfileMode, label: string}[] = [
+        { key: 'public', label: 'Public' },
+        { key: 'private', label: 'Private' },
+        { key: 'work', label: 'Work' },
+        { key: 'stealth', label: 'Stealth' },
+    ];
+
     return (
         <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm fixed top-0 left-0 right-0 z-50 border-b border-gray-200 dark:border-gray-800 card">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -18,18 +26,15 @@ const Header: React.FC<HeaderProps> = ({ profileMode, setProfileMode, coins }) =
                             ChatMac
                         </a>
                          <div className="bg-gray-200 dark:bg-gray-700 p-1 rounded-full flex items-center space-x-1 retro-button">
-                            <button 
-                                onClick={() => setProfileMode('public')}
-                                className={`px-4 py-1 text-sm font-semibold rounded-full transition-colors ${profileMode === 'public' ? 'bg-white dark:bg-gray-900 text-orange-600' : 'text-gray-600 dark:text-gray-300'}`}
-                            >
-                                Public
-                            </button>
-                             <button 
-                                onClick={() => setProfileMode('private')}
-                                className={`px-4 py-1 text-sm font-semibold rounded-full transition-colors ${profileMode === 'private' ? 'bg-white dark:bg-gray-900 text-orange-600' : 'text-gray-600 dark:text-gray-300'}`}
-                            >
-                                Private
-                            </button>
+                            {modes.map(mode => (
+                                <button 
+                                    key={mode.key}
+                                    onClick={() => setProfileMode(mode.key)}
+                                    className={`px-4 py-1 text-sm font-semibold rounded-full transition-colors ${profileMode === mode.key ? 'bg-white dark:bg-gray-900 text-orange-600' : 'text-gray-600 dark:text-gray-300'}`}
+                                >
+                                    {mode.label}
+                                </button>
+                            ))}
                         </div>
                     </div>
                     

@@ -2,39 +2,58 @@ import React from 'react';
 import { User } from '../types';
 import { SpeakerWaveIcon, HeartIcon } from './icons';
 
-const speaker: User = { name: 'Dr. Evelyn Reed', handle: '@scicomm', avatar: 'https://picsum.photos/id/201/100/100' };
-const listeners: User[] = [
+const mainSpeaker: User = { name: 'Dr. Evelyn Reed', handle: '@scicomm', avatar: 'https://picsum.photos/id/201/100/100' };
+const coSpeakers: User[] = [
     { name: 'Tom', handle: '@tommyboy', avatar: 'https://picsum.photos/id/202/50/50' },
     { name: 'Jenna', handle: '@jenna_c', avatar: 'https://picsum.photos/id/203/50/50' },
+];
+const listeners: User[] = [
     { name: 'Carlos', handle: '@carlos_dev', avatar: 'https://picsum.photos/id/204/50/50' },
     { name: 'Sam', handle: '@sam_antha', avatar: 'https://picsum.photos/id/206/50/50' },
+    { name: 'Mia', handle: '@mia_wong', avatar: 'https://picsum.photos/id/208/50/50' },
+    { name: 'Leo', handle: '@leo_b', avatar: 'https://picsum.photos/id/209/50/50' },
 ]
 
 const OpenStage: React.FC = () => {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 card">
-      <h1 className="text-3xl font-bold mb-1 text-gray-900 dark:text-gray-100">Open Stage</h1>
+      <h1 className="text-3xl font-bold mb-1 text-gray-900 dark:text-gray-100">Live Collab Stage</h1>
       <p className="text-gray-600 dark:text-gray-400 mb-6">Topic: The Future of Renewable Energy</p>
       
       {/* Speaker Section */}
-      <div className="bg-gradient-to-br from-orange-100 to-amber-200 dark:from-orange-900/50 dark:to-amber-900/50 p-6 rounded-2xl text-center">
-        <img src={speaker.avatar} alt={speaker.name} className="w-24 h-24 rounded-full mx-auto mb-2 border-4 border-white" />
-        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{speaker.name}</h2>
-        <p className="text-orange-600 dark:text-orange-400 font-semibold">{speaker.handle}</p>
-        <div className="mt-2 inline-flex items-center space-x-2 bg-white/50 dark:bg-black/20 px-3 py-1 rounded-full text-sm font-bold text-gray-700 dark:text-gray-200">
-            <SpeakerWaveIcon className="w-5 h-5 text-green-500" />
-            <span>Currently Speaking</span>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Main Speaker */}
+        <div className="md:col-span-3 bg-gradient-to-br from-orange-100 to-amber-200 dark:from-orange-900/50 dark:to-amber-900/50 p-6 rounded-2xl text-center">
+            <img src={mainSpeaker.avatar} alt={mainSpeaker.name} className="w-24 h-24 rounded-full mx-auto mb-2 border-4 border-white" />
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{mainSpeaker.name}</h2>
+            <p className="text-orange-600 dark:text-orange-400 font-semibold">{mainSpeaker.handle}</p>
+            <div className="mt-2 inline-flex items-center space-x-2 bg-white/50 dark:bg-black/20 px-3 py-1 rounded-full text-sm font-bold text-gray-700 dark:text-gray-200">
+                <SpeakerWaveIcon className="w-5 h-5 text-green-500" />
+                <span>Currently Speaking</span>
+            </div>
+        </div>
+
+        {/* Co-speakers */}
+        {coSpeakers.map(speaker => (
+             <div key={speaker.handle} className="bg-gray-100 dark:bg-gray-800/50 p-4 rounded-2xl text-center">
+                <img src={speaker.avatar} alt={speaker.name} className="w-16 h-16 rounded-full mx-auto mb-2 border-2 border-white" />
+                <h2 className="font-bold text-gray-900 dark:text-gray-100">{speaker.name}</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{speaker.handle}</p>
+             </div>
+        ))}
+         <div className="bg-gray-100 dark:bg-gray-800/50 p-4 rounded-2xl text-center flex items-center justify-center">
+            <button className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500 text-3xl">+</button>
         </div>
       </div>
       
       {/* Listeners Section */}
       <div className="mt-6">
         <h3 className="font-bold text-lg mb-4 text-gray-800 dark:text-gray-200">Listeners ({listeners.length})</h3>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-4 md:grid-cols-6 gap-4">
             {listeners.map(listener => (
                 <div key={listener.handle} className="text-center">
                     <img src={listener.avatar} alt={listener.name} className="w-16 h-16 rounded-full mx-auto" />
-                    <p className="text-sm font-semibold mt-1 text-gray-800 dark:text-gray-200">{listener.name}</p>
+                    <p className="text-sm font-semibold mt-1 text-gray-800 dark:text-gray-200 truncate">{listener.name}</p>
                 </div>
             ))}
         </div>

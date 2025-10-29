@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Post, PostContentType, User } from '../types';
-import { HeartIcon, ChatBubbleIcon, ShareIcon, MoreIcon, ClockIcon, ShieldCheckIcon, BadgeIcon, SwordsIcon } from './icons';
+import { Post, PostContentType, User, PostVisibility } from '../types';
+import { HeartIcon, ChatBubbleIcon, ShareIcon, MoreIcon, ClockIcon, ShieldCheckIcon, BadgeIcon, SwordsIcon, GlobeAltIcon, UserGroupIcon, StarIcon, FireIcon, ArrowTrendingUpIcon, MicrophoneIcon } from './icons';
 
 const PostCard: React.FC<{ post: Post; addCoins: (amount: number) => void, isAntiToxic: boolean }> = ({ post, addCoins, isAntiToxic }) => {
   const [liked, setLiked] = useState(false);
@@ -39,6 +39,15 @@ const PostCard: React.FC<{ post: Post; addCoins: (amount: number) => void, isAnt
           filteredText = filteredText.replace(regex, '****');
       });
       return filteredText;
+  }
+  
+  const VisibilityIcon: React.FC<{visibility: PostVisibility}> = ({visibility}) => {
+      switch(visibility) {
+          case 'public': return <GlobeAltIcon className="w-4 h-4 text-gray-400" title="Public" />;
+          case 'friends': return <UserGroupIcon className="w-4 h-4 text-blue-400" title="Friends Only" />;
+          case 'premium': return <StarIcon className="w-4 h-4 text-yellow-400" title="Premium Only" />;
+          default: return null;
+      }
   }
 
   const renderContent = () => {
@@ -83,7 +92,12 @@ const PostCard: React.FC<{ post: Post; addCoins: (amount: number) => void, isAnt
                   {user.isCommunityVerified && <ShieldCheckIcon className="w-5 h-5 text-blue-500" title="Community Verified" />}
                   {user.skillBadges?.map(badge => <BadgeIcon key={badge.name} className="w-5 h-5 text-purple-500" title={badge.name} />)}
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{user.handle} &middot; {post.timestamp}</p>
+              <div className="flex items-center space-x-2">
+                <p className="text-sm text-gray-500 dark:text-gray-400">{user.handle} &middot; {post.timestamp}</p>
+                <div className="flex items-center space-x-1">
+                    {post.visibility.map(v => <VisibilityIcon key={v} visibility={v} />)}
+                </div>
+              </div>
           </div>
       </div>
   );
@@ -134,22 +148,33 @@ const PostCard: React.FC<{ post: Post; addCoins: (amount: number) => void, isAnt
       )}
 
       <div className="mt-6 flex items-center justify-between text-gray-500 dark:text-gray-400">
-        <button 
-          onClick={handleLike}
-          className={`flex items-center space-x-2 hover:text-red-500 transition-colors ${liked ? 'text-red-500' : ''}`}
-        >
-          <HeartIcon className="w-6 h-6" />
-          <span className="text-sm font-semibold">{post.likes + (liked ? 1 : 0)}</span>
-        </button>
-        <button onClick={() => addCoins(2)} className="flex items-center space-x-2 hover:text-blue-500 transition-colors">
-          <ChatBubbleIcon className="w-6 h-6" />
-          <span className="text-sm font-semibold">{post.comments}</span>
-        </button>
-        <button className="flex items-center space-x-2 hover:text-green-500 transition-colors">
-          <ShareIcon className="w-6 h-6" />
-          <span className="text-sm font-semibold">{post.shares}</span>
-        </button>
+        <div className="flex items-center space-x-4">
+            <button className="flex items-center space-x-2 hover:text-red-500 transition-colors"><HeartIcon className="w-6 h-6" /></button>
+            <button className="flex items-center space-x-2 hover:text-orange-500 transition-colors"><FireIcon className="w-6 h-6" /></button>
+            <button className="flex items-center space-x-2 hover:text-green-500 transition-colors"><ArrowTrendingUpIcon className="w-6 h-6" /></button>
+            <div className="flex items-center space-x-1 text-sm font-semibold">
+                <span>🔥</span>
+                <span>{post.impactScore.toLocaleString()}</span>
+                <span>Impact</span>
+            </div>
+        </div>
+         <div className="flex items-center space-x-4">
+            <button onClick={() => addCoins(2)} className="flex items-center space-x-2 hover:text-blue-500 transition-colors">
+              <ChatBubbleIcon className="w-6 h-6" />
+              <span className="text-sm font-semibold">{post.comments}</span>
+            </button>
+            <button className="flex items-center space-x-2 hover:text-green-500 transition-colors">
+              <ShareIcon className="w-6 h-6" />
+              <span className="text-sm font-semibold">{post.shares}</span>
+            </button>
+        </div>
       </div>
+       <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center space-x-2">
+                <MicrophoneIcon className="w-6 h-6 text-gray-400"/>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Voice conversations are coming soon!</p>
+            </div>
+       </div>
     </div>
   );
 };

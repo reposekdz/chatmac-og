@@ -1,6 +1,6 @@
 import React from 'react';
-import { HomeIcon, ExploreIcon, NotificationsIcon, MessagesIcon, BookmarksIcon, ProfileIcon, MarketplaceIcon, TrophyIcon, MapIcon, UsersIcon, SpeakerWaveIcon, MoreIcon, SunIcon, MoonIcon, DesktopComputerIcon, ShieldExclamationIcon, EyeOffIcon } from './icons';
-import { View, Theme } from '../App';
+import { HomeIcon, ExploreIcon, NotificationsIcon, MessagesIcon, BookmarksIcon, ProfileIcon, MarketplaceIcon, TrophyIcon, MapIcon, UsersIcon, SpeakerWaveIcon, MoreIcon, SunIcon, MoonIcon, DesktopComputerIcon, ShieldExclamationIcon, EyeOffIcon, SparklesIcon, ViewBoardsIcon, CloudArrowDownIcon, CogIcon } from './icons';
+import { View, Theme, Mood } from '../App';
 
 interface NavLinkProps {
     icon: React.ElementType;
@@ -25,9 +25,18 @@ interface LeftAsideProps {
     setIsAntiToxic: (value: boolean) => void;
     isInvisible: boolean;
     setIsInvisible: (value: boolean) => void;
+    mood: Mood;
+    setMood: (mood: Mood) => void;
+    isSplitScreen: boolean;
+    setIsSplitScreen: (value: boolean) => void;
+    isOffline: boolean;
+    setIsOffline: (value: boolean) => void;
+    offlineQueueCount: number;
 }
 
-const LeftAside: React.FC<LeftAsideProps> = ({ activeView, setView, theme, setTheme, isAntiToxic, setIsAntiToxic, isInvisible, setIsInvisible }) => {
+const LeftAside: React.FC<LeftAsideProps> = (props) => {
+    const { activeView, setView, theme, setTheme, isAntiToxic, setIsAntiToxic, isInvisible, setIsInvisible, mood, setMood, isSplitScreen, setIsSplitScreen, isOffline, setIsOffline, offlineQueueCount } = props;
+
     const navItems: { view: View; icon: React.ElementType; label: string }[] = [
         { view: 'home', icon: HomeIcon, label: 'Home' },
         { view: 'explore', icon: ExploreIcon, label: 'Explore' },
@@ -39,6 +48,7 @@ const LeftAside: React.FC<LeftAsideProps> = ({ activeView, setView, theme, setTh
         { view: 'rooms', icon: UsersIcon, label: 'Local Rooms' },
         { view: 'stage', icon: SpeakerWaveIcon, label: 'Open Stage' },
         { view: 'profile', icon: ProfileIcon, label: 'Profile' },
+        { view: 'settings', icon: CogIcon, label: 'Settings' },
     ];
     
     return (
@@ -54,31 +64,54 @@ const LeftAside: React.FC<LeftAsideProps> = ({ activeView, setView, theme, setTh
             ))}
             
             <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-800">
-                 <div className="bg-white dark:bg-gray-900 rounded-2xl p-2 card">
-                    <h3 className="font-bold text-gray-800 dark:text-gray-200 px-2 pb-2">More</h3>
-                    <div className="flex justify-around items-center p-2 bg-gray-100 dark:bg-gray-800 rounded-xl mb-2">
+                 <div className="bg-white dark:bg-gray-900 rounded-2xl p-2 card space-y-2">
+                    <h3 className="font-bold text-gray-800 dark:text-gray-200 px-2 pb-1">Appearance</h3>
+                    <div className="flex justify-around items-center p-2 bg-gray-100 dark:bg-gray-800 rounded-xl">
                         <button onClick={() => setTheme('light')} className={`p-2 rounded-lg ${theme === 'light' ? 'bg-orange-500 text-white' : 'text-gray-500 dark:text-gray-400'}`}><SunIcon className="w-5 h-5"/></button>
                         <button onClick={() => setTheme('dark')} className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-orange-500 text-white' : 'text-gray-500 dark:text-gray-400'}`}><MoonIcon className="w-5 h-5"/></button>
                         <button onClick={() => setTheme('retro')} className={`p-2 rounded-lg ${theme === 'retro' ? 'bg-orange-500 text-white' : 'text-gray-500 dark:text-gray-400'}`}><DesktopComputerIcon className="w-5 h-5"/></button>
                     </div>
+                     <button onClick={() => {}} className={`w-full flex justify-between items-center p-2 rounded-lg`}>
+                        <div className="flex items-center space-x-2">
+                            <SparklesIcon className="w-5 h-5 text-pink-500" />
+                            <span className="text-sm font-semibold">Mood</span>
+                        </div>
+                        <span className="text-sm font-bold text-pink-500">{mood}</span>
+                    </button>
+                 </div>
+            </div>
+            
+            <div className="pt-4">
+                 <div className="bg-white dark:bg-gray-900 rounded-2xl p-2 card space-y-1">
+                    <h3 className="font-bold text-gray-800 dark:text-gray-200 px-2 pb-1">Modes</h3>
                      <button onClick={() => setIsAntiToxic(!isAntiToxic)} className={`w-full flex justify-between items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 ${isAntiToxic ? 'text-green-600 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'}`}>
                         <div className="flex items-center space-x-2">
                             <ShieldExclamationIcon className="w-5 h-5" />
-                            <span className="text-sm font-semibold">Anti-Toxic Mode</span>
+                            <span className="text-sm font-semibold">Anti-Toxic</span>
                         </div>
-                        <div className={`w-10 h-6 rounded-full p-1 flex items-center transition-colors ${isAntiToxic ? 'bg-green-500 justify-end' : 'bg-gray-300 dark:bg-gray-700 justify-start'}`}>
-                            <div className="w-4 h-4 bg-white rounded-full"></div>
-                        </div>
+                        <div className={`w-10 h-6 rounded-full p-1 flex items-center transition-colors ${isAntiToxic ? 'bg-green-500 justify-end' : 'bg-gray-300 dark:bg-gray-700 justify-start'}`}><div className="w-4 h-4 bg-white rounded-full"></div></div>
                     </button>
                     <button onClick={() => setIsInvisible(!isInvisible)} className={`w-full flex justify-between items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 ${isInvisible ? 'text-purple-600 dark:text-purple-400' : 'text-gray-700 dark:text-gray-300'}`}>
                         <div className="flex items-center space-x-2">
                             <EyeOffIcon className="w-5 h-5" />
-                            <span className="text-sm font-semibold">Invisible Mode</span>
-                            <span className="text-xs font-bold text-orange-500">(Premium)</span>
+                            <span className="text-sm font-semibold">Invisible</span>
                         </div>
-                        <div className={`w-10 h-6 rounded-full p-1 flex items-center transition-colors ${isInvisible ? 'bg-purple-500 justify-end' : 'bg-gray-300 dark:bg-gray-700 justify-start'}`}>
-                            <div className="w-4 h-4 bg-white rounded-full"></div>
+                        <div className={`w-10 h-6 rounded-full p-1 flex items-center transition-colors ${isInvisible ? 'bg-purple-500 justify-end' : 'bg-gray-300 dark:bg-gray-700 justify-start'}`}><div className="w-4 h-4 bg-white rounded-full"></div></div>
+                    </button>
+                     <button onClick={() => setIsSplitScreen(!isSplitScreen)} className={`w-full flex justify-between items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 ${isSplitScreen ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                        <div className="flex items-center space-x-2">
+                            <ViewBoardsIcon className="w-5 h-5" />
+                            <span className="text-sm font-semibold">Split Screen</span>
                         </div>
+                        <div className={`w-10 h-6 rounded-full p-1 flex items-center transition-colors ${isSplitScreen ? 'bg-blue-500 justify-end' : 'bg-gray-300 dark:bg-gray-700 justify-start'}`}><div className="w-4 h-4 bg-white rounded-full"></div></div>
+                    </button>
+                     <button onClick={() => setIsOffline(!isOffline)} className={`w-full flex justify-between items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 ${isOffline ? 'text-gray-500' : 'text-gray-700 dark:text-gray-300'}`}>
+                        <div className="flex items-center space-x-2">
+                            <CloudArrowDownIcon className="w-5 h-5" />
+                            <span className="text-sm font-semibold">Offline Mode</span>
+                            {isOffline && <span className="text-xs font-bold text-orange-500">({offlineQueueCount})</span>}
+                        </div>
+                        <div className={`w-10 h-6 rounded-full p-1 flex items-center transition-colors ${isOffline ? 'bg-gray-500 justify-end' : 'bg-gray-300 dark:bg-gray-700 justify-start'}`}><div className="w-4 h-4 bg-white rounded-full"></div></div>
                     </button>
                  </div>
             </div>
