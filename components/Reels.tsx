@@ -3,11 +3,16 @@ import { Reel, User } from '../types';
 import { FilmIcon } from './icons';
 
 const reelsData: Reel[] = [
-    { id: 1, user: { name: 'ArtfulAdventures', handle: '@creativecanvas', avatar: 'https://picsum.photos/id/1011/50/50' }, videoUrl: 'https://picsum.photos/id/1011/200/300', caption: 'Painting process time-lapse!', views: 125000 },
-    { id: 2, user: { name: 'FoodieFiesta', handle: '@tastytreats', avatar: 'https://picsum.photos/id/1025/50/50' }, videoUrl: 'https://picsum.photos/id/1025/200/300', caption: 'The perfect pizza flip.', views: 2.3 * 1000000 },
-    { id: 3, user: { name: 'Sam Adventure', handle: '@samgoesplaces', avatar: 'https://picsum.photos/id/1015/50/50' }, videoUrl: 'https://picsum.photos/id/1015/200/300', caption: 'Cliff diving moments.', views: 890000 },
-    { id: 4, user: { name: 'TechInnovator', handle: '@techguru', avatar: 'https://picsum.photos/id/1005/50/50' }, videoUrl: 'https://picsum.photos/id/1005/200/300', caption: 'Unboxing the new gadget.', views: 540000 },
-    { id: 5, user: { name: 'Elena Rodriguez', handle: '@elenacodes', avatar: 'https://picsum.photos/id/1027/50/50' }, videoUrl: 'https://picsum.photos/id/1027/200/300', caption: 'Coding a new UI element!', views: 98000 },
+    // FIX: Added missing 'id' property to conform to User type.
+    { id: 1, user: { id: 4, name: 'ArtfulAdventures', handle: '@creativecanvas', avatar: 'https://picsum.photos/id/1011/50/50' }, videoUrl: 'https://picsum.photos/id/1011/200/300', caption: 'Painting process time-lapse!', views: 125000 },
+    // FIX: Added missing 'id' property to conform to User type.
+    { id: 2, user: { id: 2, name: 'FoodieFiesta', handle: '@tastytreats', avatar: 'https://picsum.photos/id/1025/50/50' }, videoUrl: 'https://picsum.photos/id/1025/200/300', caption: 'The perfect pizza flip.', views: 2.3 * 1000000 },
+    // FIX: Added missing 'id' property to conform to User type.
+    { id: 3, user: { id: 15, name: 'Sam Adventure', handle: '@samgoesplaces', avatar: 'https://picsum.photos/id/1015/50/50' }, videoUrl: 'https://picsum.photos/id/1015/200/300', caption: 'Cliff diving moments.', views: 890000 },
+    // FIX: Added missing 'id' property to conform to User type.
+    { id: 4, user: { id: 3, name: 'TechInnovator', handle: '@techguru', avatar: 'https://picsum.photos/id/1005/50/50' }, videoUrl: 'https://picsum.photos/id/1005/200/300', caption: 'Unboxing the new gadget.', views: 540000 },
+    // FIX: Added missing 'id' property to conform to User type.
+    { id: 5, user: { id: 1, name: 'Elena Rodriguez', handle: '@elenacodes', avatar: 'https://picsum.photos/id/1027/50/50' }, videoUrl: 'https://picsum.photos/id/1027/200/300', caption: 'Coding a new UI element!', views: 98000 },
 ];
 
 const formatViews = (views: number) => {

@@ -2,16 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { SpeakerWaveIcon, HeartIcon } from './icons';
 
-const mainSpeaker: User = { name: 'Dr. Evelyn Reed', handle: '@scicomm', avatar: 'https://picsum.photos/id/201/100/100' };
+// FIX: Added missing 'id' property to conform to User type.
+const mainSpeaker: User = { id: 8, name: 'Dr. Evelyn Reed', handle: '@scicomm', avatar: 'https://picsum.photos/id/201/100/100' };
 const coSpeakers: User[] = [
-    { name: 'Tom', handle: '@tommyboy', avatar: 'https://picsum.photos/id/202/50/50' },
-    { name: 'Jenna', handle: '@jenna_c', avatar: 'https://picsum.photos/id/203/50/50' },
+    // FIX: Added missing 'id' property to conform to User type.
+    { id: 9, name: 'Tom', handle: '@tommyboy', avatar: 'https://picsum.photos/id/202/50/50' },
+    // FIX: Added missing 'id' property to conform to User type.
+    { id: 10, name: 'Jenna', handle: '@jenna_c', avatar: 'https://picsum.photos/id/203/50/50' },
 ];
 const listeners: User[] = [
-    { name: 'Carlos', handle: '@carlos_dev', avatar: 'https://picsum.photos/id/204/50/50' },
-    { name: 'Sam', handle: '@sam_antha', avatar: 'https://picsum.photos/id/206/50/50' },
-    { name: 'Mia', handle: '@mia_wong', avatar: 'https://picsum.photos/id/208/50/50' },
-    { name: 'Leo', handle: '@leo_b', avatar: 'https://picsum.photos/id/209/50/50' },
+    // FIX: Added missing 'id' property to conform to User type.
+    { id: 11, name: 'Carlos', handle: '@carlos_dev', avatar: 'https://picsum.photos/id/204/50/50' },
+    // FIX: Added missing 'id' property to conform to User type.
+    { id: 12, name: 'Sam', handle: '@sam_antha', avatar: 'https://picsum.photos/id/206/50/50' },
+    // FIX: Added missing 'id' property to conform to User type.
+    { id: 13, name: 'Mia', handle: '@mia_wong', avatar: 'https://picsum.photos/id/208/50/50' },
+    // FIX: Added missing 'id' property to conform to User type.
+    { id: 14, name: 'Leo', handle: '@leo_b', avatar: 'https://picsum.photos/id/209/50/50' },
 ]
 
 const FloatingReaction: React.FC<{emoji: string, left: string}> = ({emoji, left}) => (

@@ -3,6 +3,9 @@ const cors = require('cors');
 const postsRouter = require('./api/routes/posts');
 const storiesRouter = require('./api/routes/stories');
 const reelsRouter = require('./api/routes/reels');
+const notificationsRouter = require('./api/routes/notifications');
+const conversationsRouter = require('./api/routes/conversations');
+
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -15,6 +18,8 @@ app.use(express.json()); // Parses incoming JSON requests
 app.use('/api/posts', postsRouter);
 app.use('/api/stories', storiesRouter);
 app.use('/api/reels', reelsRouter);
+app.use('/api/notifications', notificationsRouter);
+app.use('/api/conversations', conversationsRouter);
 
 
 // A simple root route to confirm the server is running

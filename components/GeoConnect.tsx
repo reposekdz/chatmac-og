@@ -3,9 +3,12 @@ import { User } from '../types';
 import { ShieldCheckIcon, BadgeIcon, SearchCircleIcon } from './icons';
 
 const nearbyUsers: User[] = [
-  { name: 'Local Artisan', handle: '@handcrafts', avatar: 'https://picsum.photos/id/1012/100/100', isCommunityVerified: true, skillBadges: [{name: 'Crafting', icon: ''}] },
-  { name: 'City Photographer', handle: '@urbanlens', avatar: 'https://picsum.photos/id/1013/100/100', skillBadges: [{name: 'Photography', icon: ''}] },
-  { name: 'Parkside Jogger', handle: '@runhappy', avatar: 'https://picsum.photos/id/1014/100/100' },
+  // FIX: Added missing 'id' property to conform to User type.
+  { id: 5, name: 'Local Artisan', handle: '@handcrafts', avatar: 'https://picsum.photos/id/1012/100/100', isCommunityVerified: true, skillBadges: [{name: 'Crafting', icon: ''}] },
+  // FIX: Added missing 'id' property to conform to User type.
+  { id: 6, name: 'City Photographer', handle: '@urbanlens', avatar: 'https://picsum.photos/id/1013/100/100', skillBadges: [{name: 'Photography', icon: ''}] },
+  // FIX: Added missing 'id' property to conform to User type.
+  { id: 7, name: 'Parkside Jogger', handle: '@runhappy', avatar: 'https://picsum.photos/id/1014/100/100' },
 ]
 
 const DiscoveryRadar: React.FC = () => {

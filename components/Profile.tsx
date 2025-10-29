@@ -7,14 +7,20 @@ import { BadgeIcon, QrCodeIcon, MapIcon, AcademicCapIcon, HandThumbUpIcon, StarI
 const userPosts: Post[] = [
     {
     id: 1,
-    user: { name: 'Your Name', handle: '@yourhandle', avatar: 'https://picsum.photos/id/1005/200/200' },
+    // FIX: Added missing 'id' property to conform to User type.
+    user: { id: 1, name: 'Your Name', handle: '@yourhandle', avatar: 'https://picsum.photos/id/1005/200/200' },
     timestamp: '2h ago',
     content: 'This is a post on my modular profile page!',
     contentType: PostContentType.TEXT,
     visibility: ['public'],
     impactScore: 150,
-    comments: 2,
-    shares: 1,
+    // FIX: Changed 'comments' from number to Comment[] and added 'commentsCount' to match Post type.
+    comments: [],
+    commentsCount: 2,
+    // FIX: Renamed 'shares' to 'sharesCount' and added missing properties to match Post type.
+    sharesCount: 1,
+    likesCount: 12,
+    isLiked: false,
   },
 ];
 

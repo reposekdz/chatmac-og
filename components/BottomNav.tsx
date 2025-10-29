@@ -1,12 +1,12 @@
 import React from 'react';
-// FIX: Replace missing PlusIcon with PlusCircleIcon and remove it from import.
-import { HomeIcon, ExploreIcon, MessagesIcon, ProfileIcon, PlusCircleIcon } from './icons';
+import { HomeIcon, ExploreIcon, MessagesIcon, MoreIcon, PlusCircleIcon } from './icons';
 import { View } from '../App';
 
 interface BottomNavProps {
     activeView: View;
     setView: (view: View) => void;
     openCreatePostModal: () => void;
+    openNavMenu: () => void;
 }
 
 const NavItem: React.FC<{ view: View, label: string, icon: React.ElementType, active: boolean, onClick: () => void }> = ({ view, label, icon: Icon, active, onClick }) => (
@@ -16,9 +16,9 @@ const NavItem: React.FC<{ view: View, label: string, icon: React.ElementType, ac
     </button>
 );
 
-const BottomNav: React.FC<BottomNavProps> = ({ activeView, setView, openCreatePostModal }) => {
+const BottomNav: React.FC<BottomNavProps> = ({ activeView, setView, openCreatePostModal, openNavMenu }) => {
     return (
-        <div className="fixed bottom-0 left-0 right-0 h-20 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 z-50 flex items-center justify-around px-2 md:hidden">
+        <div className="fixed bottom-0 left-0 right-0 h-20 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 z-50 flex items-center justify-around px-2 lg:hidden">
             <NavItem view="home" label="Home" icon={HomeIcon} active={activeView === 'home'} onClick={() => setView('home')} />
             <NavItem view="explore" label="Explore" icon={ExploreIcon} active={activeView === 'explore'} onClick={() => setView('explore')} />
 
@@ -27,7 +27,10 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, setView, openCreatePo
             </button>
 
             <NavItem view="messages" label="Messages" icon={MessagesIcon} active={activeView === 'messages'} onClick={() => setView('messages')} />
-            <NavItem view="profile" label="Profile" icon={ProfileIcon} active={activeView === 'profile'} onClick={() => setView('profile')} />
+            <button onClick={openNavMenu} className={`flex flex-col items-center justify-center w-full text-gray-500 dark:text-gray-400`}>
+                <MoreIcon className="w-6 h-6" />
+                <span className="text-[10px] font-semibold mt-1">More</span>
+            </button>
         </div>
     );
 };

@@ -3,6 +3,7 @@ import PostCard from './PostCard';
 import CreatePost from './CreatePost';
 import StoryReel from './StoryReel';
 import { Post, Story } from '../types';
+import { loggedInUser } from '../App';
 
 interface MainContentProps {
     addCoins: (amount: number) => void;
@@ -23,7 +24,8 @@ const MainContent: React.FC<MainContentProps> = ({addCoins, isAntiToxic, setCrea
   const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/posts'); 
+      // Pass logged in user ID to determine like status
+      const response = await fetch(`/api/posts?userId=${loggedInUser.id}`); 
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -56,7 +58,6 @@ const MainContent: React.FC<MainContentProps> = ({addCoins, isAntiToxic, setCrea
       setPosts(prevPosts => [newPost, ...prevPosts]);
   }
 
-
   const filteredPosts = useMemo(() => {
       if (selectedTopics.size === 0) {
           return posts;
@@ -68,7 +69,7 @@ const MainContent: React.FC<MainContentProps> = ({addCoins, isAntiToxic, setCrea
   
   return (
     <div className="flex flex-col space-y-6">
-      <div className="md:hidden">
+      <div className="lg:hidden">
         <CreatePost onPostCreated={onPostCreated}/>
       </div>
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 card">

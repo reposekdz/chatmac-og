@@ -4,9 +4,9 @@ import { MoreIcon, StarIcon, ChartBarIcon, TicketIcon, CollectionIcon, SearchCir
 import { View } from '../App';
 
 const whoToFollowData: User[] = [
-  { name: 'TechInnovator', handle: '@techguru', avatar: 'https://picsum.photos/id/1005/50/50', reputation: 95, rank: 'Community Pillar' },
-  { name: 'ArtfulAdventures', handle: '@creativecanvas', avatar: 'https://picsum.photos/id/1011/50/50', reputation: 88, rank: 'Creative Voice' },
-  { name: 'FoodieFiesta', handle: '@tastytreats', avatar: 'https://picsum.photos/id/1025/50/50', reputation: 92, rank: 'Expert Contributor' },
+  { id: 3, name: 'TechInnovator', handle: '@techguru', avatar: 'https://picsum.photos/id/1005/50/50', reputation: 95, rank: 'Community Pillar' },
+  { id: 4, name: 'ArtfulAdventures', handle: '@creativecanvas', avatar: 'https://picsum.photos/id/1011/50/50', reputation: 88, rank: 'Creative Voice' },
+  { id: 2, name: 'FoodieFiesta', handle: '@tastytreats', avatar: 'https://picsum.photos/id/1025/50/50', reputation: 92, rank: 'Expert Contributor' },
 ];
 
 const trendsData: Trend[] = [
@@ -32,7 +32,7 @@ const Card: React.FC<{ title: string; children: React.ReactNode; padding?: boole
     </div>
 );
 
-const UserCard: React.FC<{user: User, openChat: (user: any) => void}> = ({ user, openChat }) => (
+const UserCard: React.FC<{user: User, openChat: () => void}> = ({ user, openChat }) => (
     <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
             <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full" />
@@ -44,7 +44,7 @@ const UserCard: React.FC<{user: User, openChat: (user: any) => void}> = ({ user,
                  {user.rank && <p className="text-xs font-bold text-orange-500 dark:text-orange-400">{user.rank}</p>}
             </div>
         </div>
-        <button onClick={() => openChat({id: Math.random(), name: user.name, avatar: user.avatar})} className="bg-orange-500 text-white font-semibold py-1 px-3 rounded-full text-xs hover:bg-orange-600 transition-all retro-button">
+        <button onClick={openChat} className="bg-orange-500 text-white font-semibold py-1 px-3 rounded-full text-xs hover:bg-orange-600 transition-all retro-button">
             Chat
         </button>
     </div>
@@ -65,7 +65,7 @@ const TrendItem: React.FC<{trend: Trend}> = ({ trend }) => (
 
 interface RightAsideProps {
     setView: (view: View) => void;
-    openChat: (user: any) => void;
+    openChat: () => void;
 }
 
 const RightAside: React.FC<RightAsideProps> = ({ setView, openChat }) => {

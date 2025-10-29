@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import LeftAside from './components/LeftAside';
@@ -20,18 +19,26 @@ import AdsManager from './components/AdsManager';
 import ReelsPage from './components/ReelsPage';
 import Explore from './components/Explore';
 import Messages from './components/Messages';
-// FIX: Import the Notifications component.
 import Notifications from './components/Notifications';
 import BottomNav from './components/BottomNav';
 import CreatePostModal from './components/CreatePostModal';
 import StoryViewer from './components/StoryViewer';
-import { Story } from './types';
-import { CollectionIcon, MessagesIcon, TicketIcon, XIcon, SpeakerWaveIcon, VideoCameraIcon, PaperAirplaneIcon, PaperclipIcon, MicrophoneIcon, EmojiHappyIcon, ReplyIcon, DotsHorizontalIcon } from './components/icons';
+import NavMenuModal from './components/NavMenuModal';
+import VideoCallModal from './components/VideoCallModal';
+import { Story, User } from './types';
 
 export type View = 'home' | 'explore' | 'notifications' | 'messages' | 'bookmarks' | 'profile' | 'marketplace' | 'challenges' | 'journey' | 'rooms' | 'stage' | 'creatorhub' | 'events' | 'groups' | 'discovery' | 'settings' | 'geotimeline' | 'ads' | 'reels';
 export type Theme = 'light' | 'dark' | 'retro';
 export type ProfileMode = 'public' | 'private' | 'work' | 'stealth';
 export type Mood = 'default' | 'chill' | 'focus' | 'hype';
+
+// A mock logged-in user. In a real app, this would come from an auth context.
+export const loggedInUser: User = { 
+  id: 1, 
+  name: 'Elena Rodriguez', 
+  handle: '@elenacodes', 
+  avatar: 'https://picsum.photos/id/1027/200/200' 
+};
 
 const App: React.FC = () => {
   const [view, setView] = useState<View>('home');
@@ -44,9 +51,10 @@ const App: React.FC = () => {
   const [isSplitScreen, setIsSplitScreen] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
   const [offlineQueue, setOfflineQueue] = useState(3);
-  const [activeChats, setActiveChats] = useState<{id: number, name: string, avatar: string}[]>([]);
   const [isCreatePostModalOpen, setCreatePostModalOpen] = useState(false);
+  const [isNavMenuModalOpen, setNavMenuModalOpen] = useState(false);
   const [viewingStory, setViewingStory] = useState<{ stories: Story[], startIndex: number } | null>(null);
+  const [videoCallTarget, setVideoCallTarget] = useState<User | null>(null);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -71,35 +79,20 @@ const App: React.FC = () => {
   }, [theme, mood]);
   
   const addCoins = (amount: number) => setCoins(prev => prev + amount);
-
-  const openChat = (user: {id: number, name: string, avatar: string}) => {
-    if (activeChats.length >= 3) {
-        setActiveChats(prev => [...prev.slice(1), user]);
-        return;
-    }
-    if (!activeChats.find(c => c.id === user.id)) {
-      setActiveChats(prev => [...prev, user]);
-    }
-  }
-  const closeChat = (id: number) => {
-    setActiveChats(prev => prev.filter(c => c.id !== id));
-  }
   
   const handlePostCreated = () => {
       setCreatePostModalOpen(false);
-      // This will trigger a re-render in MainContent to fetch new posts
-      // A more direct state update would be even better
-      setView('home'); // A bit of a hack to force re-render/refetch
+      // Re-navigate to home to trigger a feed refresh.
+      // A more sophisticated state management library would handle this better.
+      if (view === 'home') {
+          setView('explore'); 
+          setTimeout(() => setView('home'), 50);
+      } else {
+          setView('home');
+      }
   }
 
   const renderView = () => {
-    const PlaceholderView: React.FC<{title: string, description: React.ReactNode}> = ({title, description}) => (
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-8 card">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{title}</h1>
-            <p className="text-gray-600 dark:text-gray-400">{description}</p>
-        </div>
-    );
-
     switch (view) {
       case 'home':
         return <MainContent addCoins={addCoins} isAntiToxic={isAntiToxic} profileMode={profileMode} setCreatePostModalOpen={setCreatePostModalOpen} setViewingStory={setViewingStory}/>;
@@ -110,7 +103,7 @@ const App: React.FC = () => {
       case 'notifications':
         return <Notifications />;
       case 'messages':
-        return <Messages />;
+        return <Messages onStartVideoCall={setVideoCallTarget} />;
       case 'profile':
         return <Profile setView={setView} />;
       case 'geotimeline':
@@ -138,7 +131,7 @@ const App: React.FC = () => {
        case 'ads':
             return <AdsManager coins={coins} setCoins={setCoins} />;
       default:
-        return <PlaceholderView title={view.charAt(0).toUpperCase() + view.slice(1)} description="This page is under construction."/>;
+        return <div className="bg-white dark:bg-gray-900 rounded-2xl p-8"><h1 className="text-2xl font-bold">{view}</h1><p>This page is under construction.</p></div>;
     }
   };
 
@@ -156,8 +149,8 @@ const App: React.FC = () => {
         </div>
       )}
       <main className={`container mx-auto px-4 sm:px-6 lg:px-8 ${isInvisible ? 'pt-28' : 'pt-24'}`}>
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          <div className="hidden md:block md:col-span-1">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="hidden lg:block lg:col-span-1">
             <LeftAside 
               activeView={view} 
               setView={setView}
@@ -177,55 +170,45 @@ const App: React.FC = () => {
               setCreatePostModalOpen={setCreatePostModalOpen}
             />
           </div>
-          <div className="col-span-1 md:col-span-2">
+          <div className="col-span-1 lg:col-span-2">
             {renderView()}
           </div>
           
           <div className="hidden lg:block lg:col-span-1">
-            <RightAside setView={setView} openChat={openChat} />
+            <RightAside setView={setView} openChat={() => setView('messages')} />
           </div>
         </div>
       </main>
 
-      {/* Real-Time Multichat Overlay - Desktop Only */}
-      <div className="fixed bottom-0 right-4 hidden md:flex items-end space-x-4 z-50">
-          {activeChats.map(chat => (
-            <div key={chat.id} className="w-80 h-[28rem] bg-white dark:bg-gray-900 rounded-t-2xl shadow-2xl border border-gray-200 dark:border-gray-800 flex flex-col card">
-              <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-800">
-                <div className="flex items-center space-x-2">
-                  <img src={chat.avatar} className="w-8 h-8 rounded-full" alt={chat.name}/>
-                  <span className="font-bold text-sm">{chat.name}</span>
-                </div>
-                 <div className="flex items-center space-x-1">
-                   <button className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500"><SpeakerWaveIcon className="w-5 h-5"/></button>
-                   <button className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500"><VideoCameraIcon className="w-5 h-5"/></button>
-                   <button onClick={() => closeChat(chat.id)} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <XIcon className="w-5 h-5"/>
-                   </button>
-                 </div>
-              </div>
-              <div className="flex-grow p-3 space-y-3 overflow-y-auto">
-                  <div className="flex justify-start">
-                    <div className="bg-gray-100 dark:bg-gray-800 p-2.5 rounded-2xl rounded-bl-none max-w-xs text-sm">Hey, how's it going?</div>
-                  </div>
-                   <div className="flex justify-end">
-                    <div className="bg-orange-500 text-white p-2.5 rounded-2xl rounded-br-none max-w-xs text-sm">Pretty good! Just working on the new designs.</div>
-                  </div>
-              </div>
-              <div className="p-2 border-t border-gray-200 dark:border-gray-800">
-                <div className="bg-gray-100 dark:bg-gray-800 rounded-full flex items-center px-2">
-                    <input type="text" placeholder="Type a message..." className="flex-grow bg-transparent focus:ring-0 border-none text-sm"/>
-                    <button className="p-2 bg-orange-500 text-white rounded-full"><PaperAirplaneIcon className="w-5 h-5"/></button>
-                </div>
-              </div>
-            </div>
-          ))}
-      </div>
-      
       {isCreatePostModalOpen && <CreatePostModal onClose={() => setCreatePostModalOpen(false)} onPostCreated={handlePostCreated} />}
       {viewingStory && <StoryViewer {...viewingStory} onClose={() => setViewingStory(null)} />}
+      {isNavMenuModalOpen && <NavMenuModal 
+        onClose={() => setNavMenuModalOpen(false)}
+        activeView={view} 
+        setView={setView}
+        theme={theme}
+        setTheme={setTheme}
+        isAntiToxic={isAntiToxic}
+        setIsAntiToxic={setIsAntiToxic}
+        isInvisible={isInvisible}
+        setIsInvisible={setIsInvisible}
+        mood={mood}
+        setMood={setMood}
+        isSplitScreen={isSplitScreen}
+        setIsSplitScreen={setIsSplitScreen}
+        isOffline={isOffline}
+        setIsOffline={setIsOffline}
+        offlineQueueCount={offlineQueue}
+        setCreatePostModalOpen={setCreatePostModalOpen}
+      />}
+      {videoCallTarget && <VideoCallModal user={videoCallTarget} onClose={() => setVideoCallTarget(null)} />}
 
-      <BottomNav activeView={view} setView={setView} openCreatePostModal={() => setCreatePostModalOpen(true)} />
+      <BottomNav 
+        activeView={view} 
+        setView={setView} 
+        openCreatePostModal={() => setCreatePostModalOpen(true)}
+        openNavMenu={() => setNavMenuModalOpen(true)}
+      />
     </div>
   );
 };

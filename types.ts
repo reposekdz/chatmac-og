@@ -1,4 +1,5 @@
 export interface User {
+  id: number;
   name: string;
   handle: string;
   avatar: string;
@@ -27,14 +28,14 @@ export interface PollOption {
   votes: number;
 }
 
-export interface ThreadBattle {
-  isActive: boolean;
-  topic: string;
-  sideA: { user: User; text: string; votes: number };
-  sideB: { user: User; text: string; votes: number };
-}
-
 export type PostVisibility = 'public' | 'friends' | 'premium';
+
+export interface Comment {
+    id: number;
+    user: User;
+    content: string;
+    timestamp: string;
+}
 
 export interface Post {
   id: number;
@@ -46,11 +47,13 @@ export interface Post {
   pollOptions?: PollOption[];
   visibility: PostVisibility[];
   impactScore: number;
-  comments: number;
-  shares: number;
+  comments: Comment[];
+  commentsCount: number;
+  likesCount: number;
+  sharesCount: number;
+  isLiked: boolean; // Is the post liked by the current user
   expiresAt?: Date;
   collaborator?: User;
-  battle?: ThreadBattle;
   topics?: string[];
 }
 
@@ -112,4 +115,22 @@ export interface AdCampaign {
     budget: number; // in coins
     impressions: number;
     clicks: number;
+}
+
+export interface Notification {
+    id: number;
+    type: 'like' | 'comment' | 'follow' | 'mention' | 'system';
+    actor: User;
+    post_id?: number;
+    content_preview?: string;
+    created_at: string;
+    read_status: boolean;
+}
+
+export interface Message {
+    id: number;
+    sender_id: number;
+    content: string;
+    created_at: string;
+    reply_to?: string;
 }
