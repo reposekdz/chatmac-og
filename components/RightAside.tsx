@@ -1,6 +1,6 @@
 import React from 'react';
 import { User, Trend } from '../types';
-import { MoreIcon, StarIcon, ChartBarIcon, TicketIcon, CollectionIcon, SearchCircleIcon } from './icons';
+import { MoreIcon, StarIcon, ChartBarIcon, TicketIcon, CollectionIcon, SearchCircleIcon, UsersIcon, FireIcon, SpeakerWaveIcon } from './icons';
 import { View } from '../App';
 
 const whoToFollowData: User[] = [
@@ -70,23 +70,45 @@ interface RightAsideProps {
 
 const RightAside: React.FC<RightAsideProps> = ({ setView, openChat }) => {
    const navItems = [
-      { name: 'Creator Hub', icon: ChartBarIcon, color: 'text-purple-500 bg-purple-100 dark:bg-purple-900/50', view: 'creatorhub' },
-      { name: 'Events', icon: TicketIcon, color: 'text-red-500 bg-red-100 dark:bg-red-900/50', view: 'events' },
-      { name: 'Groups', icon: CollectionIcon, color: 'text-blue-500 bg-blue-100 dark:bg-blue-900/50', view: 'groups' },
-      { name: 'Discovery', icon: SearchCircleIcon, color: 'text-green-500 bg-green-100 dark:bg-green-900/50', view: 'discovery' },
+      { name: 'Creator Hub', icon: ChartBarIcon, view: 'creatorhub' },
+      { name: 'Events', icon: TicketIcon, view: 'events' },
+      { name: 'Groups', icon: CollectionIcon, view: 'groups' },
+      { name: 'Discovery', icon: SearchCircleIcon, view: 'discovery' },
+  ];
+
+  const communityStats = [
+    { name: 'Active Users', value: '12.5k', icon: UsersIcon, color: 'text-blue-500' },
+    { name: 'Posts Today', value: '4,821', icon: FireIcon, color: 'text-red-500' },
   ];
 
   return (
     <div className="sticky top-24 flex flex-col space-y-6">
        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 card">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">Advanced Navigations</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">Community Hub</h2>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              {communityStats.map(stat => (
+                <div key={stat.name} className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg">
+                  <stat.icon className={`w-6 h-6 mb-1 ${stat.color}`} />
+                  <p className="text-lg font-bold">{stat.value}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{stat.name}</p>
+                </div>
+              ))}
+            </div>
             <div className="grid grid-cols-2 gap-2">
-                {navItems.map(item => (
-                    <button onClick={() => setView(item.view as View)} key={item.name} className="flex flex-col items-center justify-center text-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                        <div className={`p-2 rounded-full ${item.color}`}>
-                           <item.icon className="w-6 h-6" />
-                        </div>
-                        <span className="mt-2 text-xs font-semibold text-gray-800 dark:text-gray-200">{item.name}</span>
+                <button onClick={() => setView('stage')} className="flex flex-col items-center justify-center text-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <div className="p-2 rounded-full text-green-500 bg-green-100 dark:bg-green-900/50"><SpeakerWaveIcon className="w-6 h-6" /></div>
+                    <span className="mt-2 text-xs font-semibold text-gray-800 dark:text-gray-200">Start a Stage</span>
+                </button>
+                 <button onClick={() => setView('events')} className="flex flex-col items-center justify-center text-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <div className="p-2 rounded-full text-red-500 bg-red-100 dark:bg-red-900/50"><TicketIcon className="w-6 h-6" /></div>
+                    <span className="mt-2 text-xs font-semibold text-gray-800 dark:text-gray-200">Create an Event</span>
+                </button>
+            </div>
+            <div className="mt-3 border-t border-gray-200 dark:border-gray-800 pt-3">
+               {navItems.map(item => (
+                    <button onClick={() => setView(item.view as View)} key={item.name} className="w-full flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+                      <item.icon className="w-5 h-5 text-gray-500" />
+                      <span className="text-sm font-semibold">{item.name}</span>
                     </button>
                 ))}
             </div>

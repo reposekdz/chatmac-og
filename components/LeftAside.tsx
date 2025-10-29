@@ -32,10 +32,11 @@ interface LeftAsideProps {
     isOffline: boolean;
     setIsOffline: (value: boolean) => void;
     offlineQueueCount: number;
+    setCreatePostModalOpen: (isOpen: boolean) => void;
 }
 
 const LeftAside: React.FC<LeftAsideProps> = (props) => {
-    const { activeView, setView, theme, setTheme, isAntiToxic, setIsAntiToxic, isInvisible, setIsInvisible, mood, setMood, isSplitScreen, setIsSplitScreen, isOffline, setIsOffline, offlineQueueCount } = props;
+    const { activeView, setView, theme, setTheme, isAntiToxic, setIsAntiToxic, isInvisible, setIsInvisible, mood, setMood, isSplitScreen, setIsSplitScreen, isOffline, setIsOffline, offlineQueueCount, setCreatePostModalOpen } = props;
 
     const navItems: { view: View; icon: React.ElementType; label: string }[] = [
         { view: 'home', icon: HomeIcon, label: 'Home' },
@@ -132,7 +133,7 @@ const LeftAside: React.FC<LeftAsideProps> = (props) => {
                  </div>
             </div>
 
-            <button className="mt-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold py-3 px-6 rounded-full w-full text-lg hover:shadow-lg transition-all retro-button">
+            <button onClick={() => setCreatePostModalOpen(true)} className="mt-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold py-3 px-6 rounded-full w-full text-lg hover:shadow-lg transition-all retro-button">
                 Post
             </button>
         </div>

@@ -1,14 +1,15 @@
 import React from 'react';
-import { SearchIcon, NotificationsIcon, MessagesIcon, CoinIcon } from './icons';
-import { ProfileMode } from '../App';
+import { SearchIcon, NotificationsIcon, MessagesIcon, CoinIcon, ExploreIcon, HomeIcon } from './icons';
+import { ProfileMode, View } from '../App';
 
 interface HeaderProps {
     profileMode: ProfileMode;
     setProfileMode: (mode: ProfileMode) => void;
     coins: number;
+    setView: (view: View) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ profileMode, setProfileMode, coins }) => {
+const Header: React.FC<HeaderProps> = ({ profileMode, setProfileMode, coins, setView }) => {
     
     const modes: {key: ProfileMode, label: string}[] = [
         { key: 'public', label: 'Public' },
@@ -22,12 +23,12 @@ const Header: React.FC<HeaderProps> = ({ profileMode, setProfileMode, coins }) =
     return (
         <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm fixed top-0 left-0 right-0 z-50 border-b border-gray-200 dark:border-gray-800 card">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-20">
-                    <div className="flex items-center space-x-8">
+                <div className="flex items-center justify-between h-16 md:h-20">
+                    <div className="flex items-center space-x-4 md:space-x-8">
                         <a href="#" className="text-2xl font-bold text-orange-500">
                             ChatMac
                         </a>
-                         <div className="relative">
+                         <div className="relative hidden md:block">
                            <select 
                                 value={profileMode}
                                 onChange={(e) => setProfileMode(e.target.value as ProfileMode)}
@@ -58,17 +59,16 @@ const Header: React.FC<HeaderProps> = ({ profileMode, setProfileMode, coins }) =
                     <div className="flex items-center space-x-2 sm:space-x-4">
                          <div className="flex items-center space-x-1 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-600 dark:text-yellow-400 font-bold px-3 py-1.5 rounded-full">
                             <CoinIcon className="w-5 h-5" />
-                            <span className="text-sm">{coins.toLocaleString()}</span>
+                            <span className="text-sm hidden sm:inline">{coins.toLocaleString()}</span>
                          </div>
-                         <button className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200">
-                            <MessagesIcon className="h-6 w-6" />
-                        </button>
-                        <button className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200">
-                            <NotificationsIcon className="h-6 w-6" />
-                        </button>
-                        <div className="flex-shrink-0">
+                         <div className="flex items-center md:hidden">
+                            <button onClick={() => setView('explore')} className="p-2 rounded-full text-gray-500 dark:text-gray-400"><ExploreIcon className="h-6 w-6" /></button>
+                            <button onClick={() => setView('messages')} className="p-2 rounded-full text-gray-500 dark:text-gray-400"><MessagesIcon className="h-6 w-6" /></button>
+                             <button onClick={() => setView('notifications')} className="p-2 rounded-full text-gray-500 dark:text-gray-400"><NotificationsIcon className="h-6 w-6" /></button>
+                         </div>
+                        <div className="flex-shrink-0" onClick={() => setView('profile')}>
                             <img
-                                className="h-10 w-10 rounded-full"
+                                className="h-10 w-10 rounded-full cursor-pointer"
                                 src="https://picsum.photos/id/1005/50/50"
                                 alt="User avatar"
                             />

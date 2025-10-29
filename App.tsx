@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import LeftAside from './components/LeftAside';
@@ -18,8 +19,13 @@ import Settings from './components/Settings';
 import AdsManager from './components/AdsManager';
 import ReelsPage from './components/ReelsPage';
 import Explore from './components/Explore';
-import Notifications from './components/Notifications';
 import Messages from './components/Messages';
+// FIX: Import the Notifications component.
+import Notifications from './components/Notifications';
+import BottomNav from './components/BottomNav';
+import CreatePostModal from './components/CreatePostModal';
+import StoryViewer from './components/StoryViewer';
+import { Story } from './types';
 import { CollectionIcon, MessagesIcon, TicketIcon, XIcon, SpeakerWaveIcon, VideoCameraIcon, PaperAirplaneIcon, PaperclipIcon, MicrophoneIcon, EmojiHappyIcon, ReplyIcon, DotsHorizontalIcon } from './components/icons';
 
 export type View = 'home' | 'explore' | 'notifications' | 'messages' | 'bookmarks' | 'profile' | 'marketplace' | 'challenges' | 'journey' | 'rooms' | 'stage' | 'creatorhub' | 'events' | 'groups' | 'discovery' | 'settings' | 'geotimeline' | 'ads' | 'reels';
@@ -39,7 +45,8 @@ const App: React.FC = () => {
   const [isOffline, setIsOffline] = useState(false);
   const [offlineQueue, setOfflineQueue] = useState(3);
   const [activeChats, setActiveChats] = useState<{id: number, name: string, avatar: string}[]>([]);
-
+  const [isCreatePostModalOpen, setCreatePostModalOpen] = useState(false);
+  const [viewingStory, setViewingStory] = useState<{ stories: Story[], startIndex: number } | null>(null);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -67,7 +74,6 @@ const App: React.FC = () => {
 
   const openChat = (user: {id: number, name: string, avatar: string}) => {
     if (activeChats.length >= 3) {
-        // Limit to 3 floating chats
         setActiveChats(prev => [...prev.slice(1), user]);
         return;
     }
@@ -77,6 +83,13 @@ const App: React.FC = () => {
   }
   const closeChat = (id: number) => {
     setActiveChats(prev => prev.filter(c => c.id !== id));
+  }
+  
+  const handlePostCreated = () => {
+      setCreatePostModalOpen(false);
+      // This will trigger a re-render in MainContent to fetch new posts
+      // A more direct state update would be even better
+      setView('home'); // A bit of a hack to force re-render/refetch
   }
 
   const renderView = () => {
@@ -89,7 +102,7 @@ const App: React.FC = () => {
 
     switch (view) {
       case 'home':
-        return <MainContent addCoins={addCoins} isAntiToxic={isAntiToxic} profileMode={profileMode} />;
+        return <MainContent addCoins={addCoins} isAntiToxic={isAntiToxic} profileMode={profileMode} setCreatePostModalOpen={setCreatePostModalOpen} setViewingStory={setViewingStory}/>;
       case 'explore':
         return <Explore />;
       case 'reels':
@@ -135,15 +148,16 @@ const App: React.FC = () => {
         profileMode={profileMode} 
         setProfileMode={setProfileMode}
         coins={coins}
+        setView={setView}
       />
       {isInvisible && (
-        <div className="bg-purple-600 text-white text-center py-1 fixed top-20 w-full z-40 text-sm font-bold">
+        <div className="bg-purple-600 text-white text-center py-1 fixed top-16 md:top-20 w-full z-40 text-sm font-bold">
           🕶️ Invisible Mode is ON
         </div>
       )}
       <main className={`container mx-auto px-4 sm:px-6 lg:px-8 ${isInvisible ? 'pt-28' : 'pt-24'}`}>
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <div className="hidden lg:block lg:col-span-1">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
+          <div className="hidden md:block md:col-span-1">
             <LeftAside 
               activeView={view} 
               setView={setView}
@@ -160,36 +174,21 @@ const App: React.FC = () => {
               isOffline={isOffline}
               setIsOffline={setIsOffline}
               offlineQueueCount={offlineQueue}
+              setCreatePostModalOpen={setCreatePostModalOpen}
             />
           </div>
-          <div className={`col-span-1 ${isSplitScreen ? 'lg:col-span-1' : 'lg:col-span-2'}`}>
+          <div className="col-span-1 md:col-span-2">
             {renderView()}
           </div>
-          {isSplitScreen && (
-             <div className="hidden lg:block lg:col-span-1">
-                <div className="sticky top-24 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 card h-[calc(100vh-7rem)] flex flex-col">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Split Chat</h2>
-                    <div className="flex-grow mt-2 border-t border-gray-200 dark:border-gray-800 pt-2 space-y-2">
-                       {activeChats.length > 0 ? activeChats.map(chat => (
-                         <div key={chat.id} className="flex items-center space-x-2 p-2 rounded-lg bg-gray-100 dark:bg-gray-800">
-                           <img src={chat.avatar} className="w-8 h-8 rounded-full" alt={chat.name}/>
-                           <span className="font-semibold text-sm">{chat.name}</span>
-                         </div>
-                       )) : (
-                         <p className="text-sm text-gray-500 dark:text-gray-400">Your conversations will appear here.</p>
-                       )}
-                    </div>
-                </div>
-             </div>
-          )}
+          
           <div className="hidden lg:block lg:col-span-1">
             <RightAside setView={setView} openChat={openChat} />
           </div>
         </div>
       </main>
 
-      {/* Real-Time Multichat Overlay */}
-      <div className="fixed bottom-0 right-4 flex items-end space-x-4 z-50">
+      {/* Real-Time Multichat Overlay - Desktop Only */}
+      <div className="fixed bottom-0 right-4 hidden md:flex items-end space-x-4 z-50">
           {activeChats.map(chat => (
             <div key={chat.id} className="w-80 h-[28rem] bg-white dark:bg-gray-900 rounded-t-2xl shadow-2xl border border-gray-200 dark:border-gray-800 flex flex-col card">
               <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-800">
@@ -206,38 +205,27 @@ const App: React.FC = () => {
                  </div>
               </div>
               <div className="flex-grow p-3 space-y-3 overflow-y-auto">
-                 {/* Example messages */}
                   <div className="flex justify-start">
                     <div className="bg-gray-100 dark:bg-gray-800 p-2.5 rounded-2xl rounded-bl-none max-w-xs text-sm">Hey, how's it going?</div>
                   </div>
                    <div className="flex justify-end">
                     <div className="bg-orange-500 text-white p-2.5 rounded-2xl rounded-br-none max-w-xs text-sm">Pretty good! Just working on the new designs.</div>
                   </div>
-                   <div className="flex justify-start">
-                     <div className="bg-gray-100 dark:bg-gray-800 p-2.5 rounded-2xl rounded-bl-none max-w-xs text-sm">
-                        <div className="border-l-2 border-orange-300 pl-2 text-xs opacity-80 mb-1">
-                           Replying to "Pretty good!..."
-                        </div>
-                        Nice! Can't wait to see them.
-                     </div>
-                  </div>
-
               </div>
               <div className="p-2 border-t border-gray-200 dark:border-gray-800">
                 <div className="bg-gray-100 dark:bg-gray-800 rounded-full flex items-center px-2">
-                    <button className="p-2 text-gray-500 hover:text-orange-500"><PaperclipIcon className="w-5 h-5"/></button>
-                    <button className="p-2 text-gray-500 hover:text-orange-500"><MicrophoneIcon className="w-5 h-5"/></button>
                     <input type="text" placeholder="Type a message..." className="flex-grow bg-transparent focus:ring-0 border-none text-sm"/>
-                    <button className="p-2 text-gray-500 hover:text-orange-500"><EmojiHappyIcon className="w-5 h-5"/></button>
                     <button className="p-2 bg-orange-500 text-white rounded-full"><PaperAirplaneIcon className="w-5 h-5"/></button>
                 </div>
               </div>
             </div>
           ))}
       </div>
-       <button onClick={() => openChat({id: 1, name: 'Elena Rodriguez', avatar: 'https://picsum.photos/id/1027/50/50'})} className="fixed bottom-4 right-4 bg-orange-500 text-white rounded-full p-4 shadow-lg z-40 hover:bg-orange-600">
-          <MessagesIcon className="w-6 h-6" />
-        </button>
+      
+      {isCreatePostModalOpen && <CreatePostModal onClose={() => setCreatePostModalOpen(false)} onPostCreated={handlePostCreated} />}
+      {viewingStory && <StoryViewer {...viewingStory} onClose={() => setViewingStory(null)} />}
+
+      <BottomNav activeView={view} setView={setView} openCreatePostModal={() => setCreatePostModalOpen(true)} />
     </div>
   );
 };

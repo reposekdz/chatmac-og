@@ -1,71 +1,44 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import PostCard from './PostCard';
 import CreatePost from './CreatePost';
 import StoryReel from './StoryReel';
-import { Post, PostContentType } from '../types';
+import { Post, Story } from '../types';
 
-const allPosts: Post[] = [
-  {
-    id: 1,
-    user: { name: 'Elena Rodriguez', handle: '@elenacodes', avatar: 'https://picsum.photos/id/1027/200/200', reputation: 98, isCommunityVerified: true },
-    timestamp: '2h ago',
-    content: 'Just deployed a new feature for our React app! The performance gains are incredible. Tailwind CSS made styling a breeze. 🚀',
-    contentType: PostContentType.TEXT,
-    visibility: ['public'],
-    impactScore: 1280,
-    comments: 15,
-    shares: 23,
-    topics: ['Tech', 'Gaming'],
-  },
-  {
-    id: 2,
-    user: { name: 'Sam Adventure', handle: '@samgoesplaces', avatar: 'https://picsum.photos/id/1015/200/200', reputation: 92 },
-    timestamp: '5h ago',
-    content: 'Chasing waterfalls. Nature never ceases to amaze me. 🌲🌊',
-    contentType: PostContentType.IMAGE,
-    mediaUrl: 'https://picsum.photos/id/1015/600/400',
-    visibility: ['public', 'friends'],
-    impactScore: 5430,
-    comments: 45,
-    shares: 89,
-    topics: ['Travel', 'Art'],
-  },
-   {
-    id: 3,
-    user: { name: 'Tech Central', handle: '@techcentral', avatar: 'https://picsum.photos/id/1/200/200', reputation: 85 },
-    timestamp: '8h ago',
-    content: 'What is your favorite state management library for React?',
-    contentType: PostContentType.POLL,
-    pollOptions: [
-      { text: 'Redux', votes: 120 },
-      { text: 'Zustand', votes: 250 },
-      { text: 'Jotai', votes: 80 },
-      { text: 'Context API', votes: 150 },
-    ],
-    visibility: ['public'],
-    impactScore: 720,
-    comments: 33,
-    shares: 12,
-    topics: ['Tech'],
-  },
-  {
-    id: 4,
-    user: { name: 'Motion Flix', handle: '@motionflix', avatar: 'https://picsum.photos/id/103/200/200', reputation: 99, isCommunityVerified: true },
-    timestamp: '1d ago',
-    content: 'Our latest short film "Neon Dreams" is out! Here\'s a little teaser. Let us know what you think!',
-    contentType: PostContentType.VIDEO,
-    mediaUrl: 'https://picsum.photos/id/103/600/400',
-    visibility: ['premium'],
-    impactScore: 10240,
-    comments: 112,
-    shares: 256,
-    topics: ['Art', 'Music'],
-  },
-];
+interface MainContentProps {
+    addCoins: (amount: number) => void;
+    isAntiToxic: boolean;
+    profileMode: string;
+    setCreatePostModalOpen: (isOpen: boolean) => void;
+    setViewingStory: (view: { stories: Story[], startIndex: number } | null) => void;
+}
 
-const MainContent: React.FC<any> = ({addCoins, isAntiToxic, profileMode}) => {
+const MainContent: React.FC<MainContentProps> = ({addCoins, isAntiToxic, setCreatePostModalOpen, setViewingStory}) => {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const topics = ['Tech', 'Travel', 'Gaming', 'Food', 'Music', 'Art'];
   const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set());
+
+  const fetchPosts = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/posts'); 
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data: Post[] = await response.json();
+      setPosts(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
 
   const toggleTopic = (topic: string) => {
       setSelectedTopics(prev => {
@@ -78,19 +51,26 @@ const MainContent: React.FC<any> = ({addCoins, isAntiToxic, profileMode}) => {
           return newSet;
       });
   };
+  
+  const onPostCreated = (newPost: Post) => {
+      setPosts(prevPosts => [newPost, ...prevPosts]);
+  }
+
 
   const filteredPosts = useMemo(() => {
       if (selectedTopics.size === 0) {
-          return allPosts;
+          return posts;
       }
-      return allPosts.filter(post => 
+      return posts.filter(post => 
           post.topics?.some(topic => selectedTopics.has(topic))
       );
-  }, [selectedTopics]);
+  }, [selectedTopics, posts]);
   
   return (
     <div className="flex flex-col space-y-6">
-      <CreatePost />
+      <div className="md:hidden">
+        <CreatePost onPostCreated={onPostCreated}/>
+      </div>
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 card">
         <h3 className="font-bold text-lg mb-2 text-gray-900 dark:text-gray-100">Topic Fusion</h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Combine topics to create your perfect feed.</p>
@@ -106,11 +86,13 @@ const MainContent: React.FC<any> = ({addCoins, isAntiToxic, profileMode}) => {
             ))}
         </div>
       </div>
-      <StoryReel />
-      {filteredPosts.map((post) => (
+      <StoryReel setViewingStory={setViewingStory} />
+      {loading && <div className="text-center py-12 text-gray-500 dark:text-gray-400">Loading posts...</div>}
+      {error && <div className="text-center py-12 text-red-500">Error fetching posts: {error}. Is the backend running?</div>}
+      {!loading && !error && filteredPosts.map((post) => (
         <PostCard key={post.id} post={post} addCoins={addCoins} isAntiToxic={isAntiToxic} />
       ))}
-      {filteredPosts.length === 0 && (
+      {!loading && !error && filteredPosts.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500 dark:text-gray-400">No posts match your selected topics. Try selecting others!</p>
           </div>

@@ -1,24 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ImageIcon, PollIcon, ClockIcon, UserGroupIcon, GlobeAltIcon, StarIcon, LinkIcon, CalendarIcon } from './icons';
-import { PostVisibility } from '../types';
+import { Post, PostVisibility } from '../types';
 
-const Toast: React.FC<{ message: string, onDone: () => void }> = ({ message, onDone }) => {
-    useEffect(() => {
-        const timer = setTimeout(onDone, 3000);
-        return () => clearTimeout(timer);
-    }, [onDone]);
+interface CreatePostProps {
+    onPostCreated: (newPost: Post) => void;
+}
 
-    return (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-bold animate-toast-in z-[200]">
-            {message}
-        </div>
-    );
-};
-
-const CreatePost: React.FC = () => {
+const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated }) => {
   const [visibility, setVisibility] = useState<Set<PostVisibility>>(new Set(['public']));
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
+  const [content, setContent] = useState('');
+  const [isPosting, setIsPosting] = useState(false);
+  
   const toggleVisibility = (v: PostVisibility) => {
     setVisibility(prev => {
         const newSet = new Set(prev);
@@ -30,18 +22,41 @@ const CreatePost: React.FC = () => {
         return newSet;
     });
   }
+  
+  const handlePost = async () => {
+    if (!content.trim() || isPosting) return;
 
-  const handleSchedule = () => {
-      setToastMessage('Post has been scheduled!');
-  }
+    setIsPosting(true);
+    try {
+        const response = await fetch('/api/posts/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                content,
+                // In a real app, user_id would come from auth context
+                user_id: 1, 
+                contentType: 'TEXT',
+                visibility: Array.from(visibility),
+            }),
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to create post');
+        }
 
-  const handleChain = () => {
-       setToastMessage('Chain Post created! Add another post to the series.');
-  }
+        const newPost = await response.json();
+        onPostCreated(newPost);
+        setContent(''); // Clear textarea
+    } catch (error) {
+        console.error("Error creating post:", error);
+        alert("Could not create post. Please try again.");
+    } finally {
+        setIsPosting(false);
+    }
+  };
 
   return (
     <>
-    {toastMessage && <Toast message={toastMessage} onDone={() => setToastMessage(null)} />}
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 card">
       <div className="flex items-start space-x-4">
         <img
@@ -54,6 +69,8 @@ const CreatePost: React.FC = () => {
             rows={3}
             className="w-full border-none focus:ring-0 resize-none text-lg placeholder-gray-500 dark:placeholder-gray-400 bg-transparent"
             placeholder="What's happening?"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
           ></textarea>
         </div>
       </div>
@@ -65,10 +82,10 @@ const CreatePost: React.FC = () => {
             <button className="p-2 rounded-full text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/20" title="Create Poll">
                 <PollIcon className="w-6 h-6" />
             </button>
-            <button onClick={handleSchedule} className="p-2 rounded-full text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/20" title="Schedule Post">
+            <button className="p-2 rounded-full text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/20" title="Schedule Post">
                 <CalendarIcon className="w-6 h-6" />
             </button>
-            <button onClick={handleChain} className="p-2 rounded-full text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/20" title="Create a Chain Post">
+            <button className="p-2 rounded-full text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/20" title="Create a Chain Post">
                 <LinkIcon className="w-6 h-6" />
             </button>
         </div>
@@ -84,8 +101,12 @@ const CreatePost: React.FC = () => {
                     <StarIcon className="w-5 h-5"/>
                 </button>
             </div>
-            <button className="bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold py-2 px-6 rounded-full text-sm hover:shadow-md transition-all retro-button">
-              Post
+            <button 
+              onClick={handlePost}
+              disabled={isPosting || !content.trim()}
+              className="bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold py-2 px-6 rounded-full text-sm hover:shadow-md transition-all retro-button disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isPosting ? 'Posting...' : 'Post'}
             </button>
         </div>
       </div>

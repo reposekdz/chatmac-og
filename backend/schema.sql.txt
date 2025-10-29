@@ -1,0 +1,124 @@
+-- ChatMac MySQL Database Schema
+-- Version 1.1
+
+CREATE DATABASE IF NOT EXISTS chatmac_db;
+USE chatmac_db;
+
+-- Drop tables if they exist to start fresh
+DROP TABLE IF EXISTS `poll_votes`, `poll_options`, `followers`, `likes`, `comments`, `stories`, `reels`, `posts`, `users`;
+
+-- Users Table: Stores user account information
+CREATE TABLE `users` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `username` VARCHAR(50) NOT NULL,
+  `handle` VARCHAR(50) UNIQUE NOT NULL,
+  `email` VARCHAR(255) UNIQUE NOT NULL,
+  `password_hash` VARCHAR(255) NOT NULL,
+  `avatar_url` VARCHAR(255),
+  `cover_photo_url` VARCHAR(255),
+  `bio` TEXT,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `reputation` INT DEFAULT 0,
+  `is_community_verified` BOOLEAN DEFAULT FALSE
+);
+
+-- Posts Table: Stores all posts created by users
+CREATE TABLE `posts` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT NOT NULL,
+  `content` TEXT NOT NULL,
+  `content_type` ENUM('TEXT', 'IMAGE', 'VIDEO', 'POLL') NOT NULL,
+  `media_url` VARCHAR(255),
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `impact_score` INT DEFAULT 0,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+);
+
+-- Reels Table: Stores short-form video content
+CREATE TABLE `reels` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT NOT NULL,
+  `video_url` VARCHAR(255) NOT NULL,
+  `caption` TEXT,
+  `views` INT DEFAULT 0,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+);
+
+-- Stories Table: Stores ephemeral content
+CREATE TABLE `stories` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT NOT NULL,
+  `media_url` VARCHAR(255) NOT NULL,
+  `media_type` ENUM('IMAGE', 'VIDEO') NOT NULL DEFAULT 'IMAGE',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `expires_at` TIMESTAMP NOT NULL,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+);
+
+-- Comments Table: Stores comments on posts
+CREATE TABLE `comments` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `post_id` INT NOT NULL,
+  `user_id` INT NOT NULL,
+  `content` TEXT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`post_id`) REFERENCES `posts`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+);
+
+-- Likes Table: Tracks likes on posts
+CREATE TABLE `likes` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `post_id` INT NOT NULL,
+  `user_id` INT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `user_post_like` (`user_id`, `post_id`),
+  FOREIGN KEY (`post_id`) REFERENCES `posts`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+);
+
+-- Followers Table: Manages user-to-user following relationships
+CREATE TABLE `followers` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `follower_id` INT NOT NULL,
+  `following_id` INT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `follow_relationship` (`follower_id`, `following_id`),
+  FOREIGN KEY (`follower_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`following_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+);
+
+-- Poll Options Table: Stores options for posts of type POLL
+CREATE TABLE `poll_options` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `post_id` INT NOT NULL,
+  `option_text` VARCHAR(255) NOT NULL,
+  FOREIGN KEY (`post_id`) REFERENCES `posts`(`id`) ON DELETE CASCADE
+);
+
+-- Poll Votes Table: Tracks user votes on poll options
+CREATE TABLE `poll_votes` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `poll_option_id` INT NOT NULL,
+  `user_id` INT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `user_poll_vote` (`user_id`, `poll_option_id`),
+  FOREIGN KEY (`poll_option_id`) REFERENCES `poll_options`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+);
+
+-- --- SEED DATA ---
+-- Insert some sample users
+INSERT INTO `users` (`id`, `username`, `handle`, `email`, `password_hash`, `avatar_url`, `reputation`, `is_community_verified`) VALUES
+(1, 'Elena Rodriguez', '@elenacodes', 'elena@test.com', 'hashed_password', 'https://picsum.photos/id/1027/200/200', 98, 1),
+(2, 'Sam Adventure', '@samgoesplaces', 'sam@test.com', 'hashed_password', 'https://picsum.photos/id/1015/200/200', 92, 0),
+(3, 'Tech Central', '@techcentral', 'tech@test.com', 'hashed_password', 'https://picsum.photos/id/1/200/200', 85, 0),
+(4, 'Motion Flix', '@motionflix', 'flix@test.com', 'hashed_password', 'https://picsum.photos/id/103/200/200', 99, 1);
+
+-- Insert some sample posts
+INSERT INTO `posts` (`user_id`, `content`, `content_type`, `media_url`, `impact_score`, `created_at`) VALUES
+(1, 'Just deployed a new feature for our React app! The performance gains are incredible. Tailwind CSS made styling a breeze. 🚀', 'TEXT', NULL, 1280, NOW() - INTERVAL 2 HOUR),
+(2, 'Chasing waterfalls. Nature never ceases to amaze me. 🌲🌊', 'IMAGE', 'https://picsum.photos/id/1015/600/400', 5430, NOW() - INTERVAL 5 HOUR),
+(4, 'Our latest short film "Neon Dreams" is out! Here''s a little teaser. Let us know what you think!', 'VIDEO', 'https://picsum.photos/id/103/600/400', 10240, NOW() - INTERVAL 1 DAY);
+
