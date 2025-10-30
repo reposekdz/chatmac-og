@@ -1,10 +1,15 @@
-
 import React from 'react';
-import { SearchIcon, FireIcon, ArrowTrendingUpIcon, PlusCircleIcon, MegaphoneIcon } from './icons';
+import { FireIcon, MegaphoneIcon } from './icons';
+import { View } from '../App';
 import GeoConnect from './GeoConnect';
-import Reels from './Reels';
+import CreatorHubPreview from './CreatorHubPreview';
+import EventsPreview from './EventsPreview';
 
-const RightAside: React.FC = () => {
+interface RightAsideProps {
+    setView: (view: View) => void;
+}
+
+const RightAside: React.FC<RightAsideProps> = ({ setView }) => {
     const trends = [
         { topic: '#TechWeek', posts: '15.2k' },
         { topic: 'AI Art', posts: '8.9k' },
@@ -19,10 +24,8 @@ const RightAside: React.FC = () => {
 
     return (
         <div className="sticky top-24 flex flex-col space-y-6">
-            <div className="relative">
-                <SearchIcon className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                <input type="text" placeholder="Search ChatMac" className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-full pl-12 pr-4 py-3 card"/>
-            </div>
+            <CreatorHubPreview setView={setView} />
+            <EventsPreview setView={setView} />
             
             <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 card">
                 <div className="flex items-center space-x-2 mb-3">
@@ -38,8 +41,6 @@ const RightAside: React.FC = () => {
                     ))}
                 </div>
             </div>
-
-            <Reels />
             
             <GeoConnect />
 

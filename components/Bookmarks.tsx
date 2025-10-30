@@ -1,11 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
+import { Socket } from 'socket.io-client';
 import { BookmarksIcon } from './icons';
-import { Post } from '../types';
+import { ClientToServerEvents, Post, ServerToClientEvents } from '../types';
 import PostCard from './PostCard';
 import { loggedInUser } from '../App';
 
-const Bookmarks: React.FC = () => {
+interface BookmarksProps {
+    socket: Socket<ServerToClientEvents, ClientToServerEvents>;
+}
+
+const Bookmarks: React.FC<BookmarksProps> = ({ socket }) => {
     const [bookmarkedPosts, setBookmarkedPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -37,7 +42,8 @@ const Bookmarks: React.FC = () => {
             </div>
             {loading ? <p>Loading bookmarks...</p> : (
                 bookmarkedPosts.length > 0 ?
-                bookmarkedPosts.map(post => <PostCard key={post.id} post={post} />) :
+                // FIX: Pass socket prop to PostCard to resolve TypeScript error.
+                bookmarkedPosts.map(post => <PostCard key={post.id} post={post} socket={socket} />) :
                 <p className="text-center text-gray-500">You haven't bookmarked any posts yet.</p>
             )}
         </div>

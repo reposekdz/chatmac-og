@@ -1,5 +1,5 @@
 import React from 'react';
-import { HomeIcon, ExploreIcon, NotificationsIcon, MessagesIcon, BookmarksIcon, ProfileIcon, MarketplaceIcon, TrophyIcon, MapIcon, UsersIcon, SpeakerWaveIcon, MoreIcon, SunIcon, MoonIcon, DesktopComputerIcon, ShieldExclamationIcon, EyeOffIcon, SparklesIcon, ViewBoardsIcon, CloudArrowDownIcon, CogIcon, FireIcon, MegaphoneIcon, FilmIcon, AccessibilityIcon } from './icons';
+import { HomeIcon, ExploreIcon, NotificationsIcon, MessagesIcon, BookmarksIcon, ProfileIcon, MarketplaceIcon, TrophyIcon, MapIcon, UsersIcon, SpeakerWaveIcon, MoreIcon, SunIcon, MoonIcon, DesktopComputerIcon, ShieldExclamationIcon, EyeOffIcon, SparklesIcon, ViewBoardsIcon, CloudArrowDownIcon, CogIcon, FireIcon, MegaphoneIcon, FilmIcon, AccessibilityIcon, ChartBarIcon, TicketIcon } from './icons';
 import { View, Theme, Mood } from '../App';
 
 interface NavLinkProps {
@@ -49,7 +49,9 @@ const LeftAside: React.FC<LeftAsideProps> = (props) => {
         { view: 'journey', icon: MapIcon, label: 'My Journey' },
         { view: 'rooms', icon: UsersIcon, label: 'Local Rooms' },
         { view: 'stage', icon: SpeakerWaveIcon, label: 'Open Stage' },
+        { view: 'events', icon: TicketIcon, label: 'Events' },
         { view: 'ads', icon: MegaphoneIcon, label: 'Ads Manager' },
+        { view: 'creatorhub', icon: ChartBarIcon, label: 'Creator Hub' },
         { view: 'profile', icon: ProfileIcon, label: 'Profile' },
         { view: 'settings', icon: CogIcon, label: 'Settings' },
         { view: 'accessibility', icon: AccessibilityIcon, label: 'Accessibility' },

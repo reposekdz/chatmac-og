@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../../db');
+const axios = require('axios');
 
 // A helper function to enrich posts with user details and stats
 const enrichPosts = async (posts, userId = 0) => {
@@ -26,6 +27,57 @@ const enrichPosts = async (posts, userId = 0) => {
     }));
 };
 
+// GET /api/posts/foryou/:userId - Fetch AI-recommended posts
+router.get('/foryou/:userId', async (req, res) => {
+    const { userId } = req.params;
+    try {
+        const recommendationResponse = await axios.get(`http://localhost:5000/recommendations/${userId}`);
+        const { post_ids } = recommendationResponse.data;
+
+        if (!post_ids || post_ids.length === 0) {
+            // Fallback to chronological feed if no recommendations
+            console.log(`No recommendations for user ${userId}, falling back to chronological.`);
+            const [posts] = await db.query(`
+                SELECT p.id, p.content, p.image_url, p.created_at, p.latitude, p.longitude, p.share_count, p.original_post_id,
+                       JSON_OBJECT('id', u.id, 'name', u.name, 'handle', u.handle, 'avatar', u.avatar) as user
+                FROM posts p JOIN users u ON p.user_id = u.id
+                WHERE p.moderation_status = 'approved'
+                ORDER BY p.created_at DESC LIMIT 20;
+            `);
+            const enrichedPosts = await enrichPosts(posts, userId);
+            return res.json(enrichedPosts);
+        }
+
+        const [posts] = await db.query(`
+            SELECT p.id, p.content, p.image_url, p.created_at, p.latitude, p.longitude, p.share_count, p.original_post_id,
+                   JSON_OBJECT('id', u.id, 'name', u.name, 'handle', u.handle, 'avatar', u.avatar) as user
+            FROM posts p JOIN users u ON p.user_id = u.id
+            WHERE p.id IN (?) AND p.moderation_status = 'approved'
+            ORDER BY FIELD(p.id, ?)
+        `, [post_ids, post_ids]);
+
+        const enrichedPosts = await enrichPosts(posts, userId);
+        res.json(enrichedPosts);
+
+    } catch (error) {
+        console.error("Error fetching 'For You' feed:", error.message);
+        // Fallback to chronological feed if Python service is down or errors out
+        try {
+            const [posts] = await db.query(`
+                SELECT p.id, p.content, p.image_url, p.created_at, p.latitude, p.longitude, p.share_count, p.original_post_id,
+                       JSON_OBJECT('id', u.id, 'name', u.name, 'handle', u.handle, 'avatar', u.avatar) as user
+                FROM posts p JOIN users u ON p.user_id = u.id
+                WHERE p.moderation_status = 'approved'
+                ORDER BY p.created_at DESC LIMIT 20;
+            `);
+            const enrichedPosts = await enrichPosts(posts, userId);
+            res.json(enrichedPosts);
+        } catch (dbError) {
+             res.status(500).json({ message: "Error fetching feed" });
+        }
+    }
+});
+
 // GET /api/posts - Fetch all posts for the feed
 router.get('/', async (req, res) => {
     const userId = req.query.userId || 0;
@@ -36,6 +88,7 @@ router.get('/', async (req, res) => {
                 JSON_OBJECT('id', u.id, 'name', u.name, 'handle', u.handle, 'avatar', u.avatar) as user
             FROM posts p
             JOIN users u ON p.user_id = u.id
+            WHERE p.moderation_status = 'approved'
             ORDER BY p.created_at DESC
             LIMIT 50;
         `);
@@ -56,7 +109,7 @@ router.get('/geotagged', async (req, res) => {
                 JSON_OBJECT('id', u.id, 'name', u.name, 'handle', u.handle, 'avatar', u.avatar) as user
             FROM posts p
             JOIN users u ON p.user_id = u.id
-            WHERE p.latitude IS NOT NULL AND p.longitude IS NOT NULL
+            WHERE p.latitude IS NOT NULL AND p.longitude IS NOT NULL AND p.moderation_status = 'approved'
             ORDER BY p.created_at DESC
             LIMIT 20;
         `);
@@ -78,7 +131,7 @@ router.get('/user/:handle', async (req, res) => {
                 JSON_OBJECT('id', u.id, 'name', u.name, 'handle', u.handle, 'avatar', u.avatar) as user
             FROM posts p
             JOIN users u ON p.user_id = u.id
-            WHERE u.handle = ?
+            WHERE u.handle = ? AND p.moderation_status = 'approved'
             ORDER BY p.created_at DESC
             LIMIT 50;
         `, [handle.startsWith('@') ? handle.substring(1) : handle]);
@@ -96,16 +149,34 @@ router.post('/', async (req, res) => {
     if (!userId || !content) {
         return res.status(400).json({ message: "User ID and content are required." });
     }
+
+    let moderationStatus = 'approved';
+    try {
+        const moderationResponse = await axios.post('http://localhost:5001/moderate', { text: content });
+        const result = moderationResponse.data.status;
+        if (result === 'BLOCKED') {
+            return res.status(400).json({ message: "This content violates our community guidelines and cannot be posted." });
+        }
+        if (result === 'REVIEW') {
+            moderationStatus = 'pending_review';
+        }
+    } catch (error) {
+        console.error("Moderation service error:", error.message);
+        // Fail open: if moderation service is down, allow post but flag for review
+        moderationStatus = 'pending_review';
+    }
+
+
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();
         const [result] = await connection.query(
-            'INSERT INTO posts (user_id, content, image_url) VALUES (?, ?, ?)',
-            [userId, content, imageUrl || null]
+            'INSERT INTO posts (user_id, content, image_url, moderation_status) VALUES (?, ?, ?, ?)',
+            [userId, content, imageUrl || null, moderationStatus]
         );
         // Poll logic would be added here if needed
         await connection.commit();
-        res.status(201).json({ id: result.insertId });
+        res.status(201).json({ id: result.insertId, moderationStatus });
     } catch (error) {
         await connection.rollback();
         console.error("Error creating post:", error);
@@ -119,20 +190,19 @@ router.post('/', async (req, res) => {
 router.post('/:id/like', async (req, res) => {
     const postId = req.params.id;
     const { userId } = req.body;
+    const io = req.app.get('io');
+
     if (!userId) return res.status(400).json({ message: 'User ID is required' });
 
     try {
         const [[existing]] = await db.query('SELECT id FROM post_likes WHERE post_id = ? AND user_id = ?', [postId, userId]);
         if (existing) {
             await db.query('DELETE FROM post_likes WHERE id = ?', [existing.id]);
-            res.json({ liked: false });
         } else {
             await db.query('INSERT INTO post_likes (post_id, user_id) VALUES (?, ?)', [postId, userId]);
-            
-            // Send notification
+            // Send notification for a new like
             const [[post]] = await db.query('SELECT user_id FROM posts WHERE id = ?', [postId]);
             if (post && post.user_id !== userId) {
-                 const io = req.app.get('io');
                  const socketManager = require('../../services/socketManager');
                  const recipientSocketId = socketManager.getSocketId(post.user_id);
                  if (recipientSocketId) {
@@ -141,8 +211,13 @@ router.post('/:id/like', async (req, res) => {
                     io.to(recipientSocketId).emit('newNotification', notification);
                  }
             }
-            res.json({ liked: true });
         }
+        
+        // Fetch new like count and broadcast update
+        const [[{ likes_count }]] = await db.query('SELECT COUNT(*) as likes_count FROM post_likes WHERE post_id = ?', [postId]);
+        io.to(`post:${postId}`).emit('post:likeUpdate', { postId: parseInt(postId), likes_count });
+
+        res.json({ liked: !existing });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Error liking post' });
@@ -190,6 +265,8 @@ router.get('/:id/comments', async (req, res) => {
 router.post('/:id/comments', async (req, res) => {
     const postId = req.params.id;
     const { userId, content } = req.body;
+    const io = req.app.get('io');
+
     if (!userId || !content) return res.status(400).json({ message: 'User ID and content are required' });
     try {
         const [result] = await db.query('INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)', [postId, userId, content]);
@@ -199,6 +276,11 @@ router.post('/:id/comments', async (req, res) => {
              JOIN users u ON c.user_id = u.id
              WHERE c.id = ?
         `, [result.insertId]);
+
+        // Fetch new comment count and broadcast update
+        const [[{ comments_count }]] = await db.query('SELECT COUNT(*) as comments_count FROM comments WHERE post_id = ?', [postId]);
+        io.to(`post:${postId}`).emit('post:newComment', { postId: parseInt(postId), comment, comments_count });
+
         res.status(201).json(comment);
     } catch (error) {
         res.status(500).json({ message: 'Error creating comment' });

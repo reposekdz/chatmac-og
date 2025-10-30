@@ -43,26 +43,26 @@ const DiscoveryRadar: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 card">
-      <h1 className="text-3xl font-bold mb-1 text-gray-900 dark:text-gray-100">Discovery Radar</h1>
-      <p className="text-gray-600 dark:text-gray-400 mb-6">Discover amazing people, events, and content near you.</p>
+    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 md:p-6 card">
+      <h1 className="text-2xl lg:text-3xl font-bold mb-1 text-gray-900 dark:text-gray-100">Discovery Radar</h1>
+      <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm lg:text-base">Discover people near you.</p>
 
-      <div className="relative w-64 h-64 mx-auto mb-8">
+      <div className="relative w-48 h-48 lg:w-64 lg:h-64 mx-auto mb-8">
         <div className="absolute inset-0 rounded-full bg-orange-100 dark:bg-orange-900/20"></div>
         <div className="absolute inset-0 rounded-full border-2 border-dashed border-orange-300 dark:border-orange-700 animate-spin-slow"></div>
         <div className="absolute inset-2 rounded-full border-2 border-orange-200 dark:border-orange-800"></div>
         <div className="absolute inset-0 animate-pulse-radar border-2 border-orange-400 rounded-full"></div>
         <div className="absolute inset-0 animate-pulse-radar border-2 border-orange-400 rounded-full" style={{animationDelay: '1.25s'}}></div>
         <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center shadow-lg animate-pulse-subtle">
-                <SearchCircleIcon className="w-10 h-10 text-white"/>
+            <div className="w-12 h-12 lg:w-16 lg:h-16 rounded-full bg-orange-500 flex items-center justify-center shadow-lg animate-pulse-subtle">
+                <SearchCircleIcon className="w-8 h-8 lg:w-10 lg:h-10 text-white"/>
             </div>
         </div>
 
         {/* Floating user avatars on the radar */}
-        {nearbyUsers.length > 0 && <img src={nearbyUsers[0].avatar} className="w-12 h-12 rounded-full absolute top-4 left-8 border-2 border-white shadow-md" alt="user"/>}
-        {nearbyUsers.length > 1 && <img src={nearbyUsers[1].avatar} className="w-10 h-10 rounded-full absolute top-24 right-2 border-2 border-white shadow-md" alt="user"/>}
-        {nearbyUsers.length > 2 && <img src={nearbyUsers[2].avatar} className="w-14 h-14 rounded-full absolute bottom-4 left-16 border-2 border-white shadow-md" alt="user"/>}
+        {nearbyUsers.length > 0 && <img src={nearbyUsers[0].avatar} className="w-10 h-10 lg:w-12 lg:h-12 rounded-full absolute top-2 left-4 lg:top-4 lg:left-8 border-2 border-white shadow-md" alt="user"/>}
+        {nearbyUsers.length > 1 && <img src={nearbyUsers[1].avatar} className="w-8 h-8 lg:w-10 lg:h-10 rounded-full absolute top-16 right-1 lg:top-24 lg:right-2 border-2 border-white shadow-md" alt="user"/>}
+        {nearbyUsers.length > 2 && <img src={nearbyUsers[2].avatar} className="w-12 h-12 lg:w-14 lg:h-14 rounded-full absolute bottom-2 left-12 lg:bottom-4 lg:left-16 border-2 border-white shadow-md" alt="user"/>}
       </div>
 
       <div className="flex flex-col space-y-4">

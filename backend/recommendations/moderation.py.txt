@@ -1,0 +1,31 @@
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+import os
+
+app = Flask(__name__)
+CORS(app)
+
+# In a real-world scenario, this would be a sophisticated model or a comprehensive, managed list.
+BLOCKED_KEYWORDS = {'toxicword', 'hate_speech', 'explicit_content'}
+REVIEW_KEYWORDS = {'suspicious', 'maybe_bad', 'borderline'}
+
+@app.route('/moderate', methods=['POST'])
+def moderate_text():
+    data = request.get_json()
+    if not data or 'text' not in data:
+        return jsonify({"error": "Text content is required"}), 400
+
+    text_content = data['text'].lower()
+    
+    # Simple keyword-based moderation logic
+    if any(keyword in text_content for keyword in BLOCKED_KEYWORDS):
+        return jsonify({"status": "BLOCKED"})
+    
+    if any(keyword in text_content for keyword in REVIEW_KEYWORDS):
+        return jsonify({"status": "REVIEW"})
+        
+    return jsonify({"status": "SAFE"})
+
+if __name__ == '__main__':
+    # The moderation service runs on port 5001
+    app.run(debug=True, port=5001)

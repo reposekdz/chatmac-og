@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { Post } from '../types';
-import { HeartIcon, ChatBubbleIcon, ShareIcon, BookmarksIcon, MoreIcon, XIcon } from './icons';
+import React, { useState, useEffect } from 'react';
+import { Socket } from 'socket.io-client';
+import { Post, ClientToServerEvents, ServerToClientEvents } from '../types';
+import { HeartIcon, ChatBubbleIcon, ShareIcon, BookmarksIcon, MoreIcon, XIcon, DiamondIcon } from './icons';
 import PollDisplay from './PollDisplay';
 import { loggedInUser } from '../App';
+import MintNFTModal from './MintNFTModal';
 
 const ShareModal: React.FC<{ post: Post; onClose: () => void; onConfirm: () => void }> = ({ post, onClose, onConfirm }) => {
     return (
@@ -31,13 +33,41 @@ const ShareModal: React.FC<{ post: Post; onClose: () => void; onConfirm: () => v
 interface PostCardProps {
     post: Post;
     openPostDetail?: (post: Post) => void;
+    socket: Socket<ServerToClientEvents, ClientToServerEvents>;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, openPostDetail }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, openPostDetail, socket }) => {
     const [isLiked, setIsLiked] = useState(post.is_liked_by_user);
     const [likesCount, setLikesCount] = useState(post.likes_count);
+    const [commentsCount, setCommentsCount] = useState(post.comments_count);
     const [isBookmarked, setIsBookmarked] = useState(post.is_bookmarked_by_user);
     const [isShareModalOpen, setShareModalOpen] = useState(false);
+    const [isMintModalOpen, setIsMintModalOpen] = useState(false);
+
+    useEffect(() => {
+        socket.emit('joinRoom', `post:${post.id}`);
+
+        const handleLikeUpdate = (data: { postId: number; likes_count: number; }) => {
+            if (data.postId === post.id) {
+                setLikesCount(data.likes_count);
+            }
+        };
+
+        const handleNewComment = (data: { postId: number; comments_count: number; }) => {
+            if (data.postId === post.id) {
+                setCommentsCount(data.comments_count);
+            }
+        };
+
+        socket.on('post:likeUpdate', handleLikeUpdate);
+        socket.on('post:newComment', handleNewComment);
+
+        return () => {
+            socket.off('post:likeUpdate', handleLikeUpdate);
+            socket.off('post:newComment', handleNewComment);
+            // Leaving room can be handled by server on disconnect
+        };
+    }, [post.id, socket]);
 
     const handleLike = async () => {
         const newIsLiked = !isLiked;
@@ -87,12 +117,15 @@ const PostCard: React.FC<PostCardProps> = ({ post, openPostDetail }) => {
             setShareModalOpen(false);
         }
     }
+    
+    const canMint = post.user.id === loggedInUser.id && post.image_url;
 
     const originalPost = post.original_post; // Assuming the API returns this nested object
 
     return (
       <>
         {isShareModalOpen && <ShareModal post={post} onClose={() => setShareModalOpen(false)} onConfirm={handleShare}/>}
+        {isMintModalOpen && canMint && <MintNFTModal post={post} onClose={() => setIsMintModalOpen(false)} onMintSuccess={() => console.log('Minted!')} />}
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 card">
             {post.original_post_id && (
                 <div className="text-sm text-gray-500 mb-2">
@@ -116,7 +149,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, openPostDetail }) => {
                     
                     {post.poll && <PollDisplay poll={post.poll} postId={post.id} />}
 
-                    {originalPost && <div className="mt-2 border border-gray-200 dark:border-gray-700 rounded-xl p-4"><PostCard post={originalPost} /></div>}
+                    {originalPost && <div className="mt-2 border border-gray-200 dark:border-gray-700 rounded-xl p-4"><PostCard post={originalPost} socket={socket} /></div>}
 
                     <div className="flex items-center justify-between mt-4 text-gray-500 dark:text-gray-400">
                         <div className="flex items-center space-x-4">
@@ -126,12 +159,17 @@ const PostCard: React.FC<PostCardProps> = ({ post, openPostDetail }) => {
                             </button>
                              <button onClick={() => openPostDetail && openPostDetail(post)} className="flex items-center space-x-1.5 group">
                                 <ChatBubbleIcon className="w-6 h-6 group-hover:text-blue-500" />
-                                <span className="text-sm font-semibold">{post.comments_count.toLocaleString()}</span>
+                                <span className="text-sm font-semibold">{commentsCount.toLocaleString()}</span>
                             </button>
                              <button onClick={() => setShareModalOpen(true)} className="flex items-center space-x-1.5 group">
                                 <ShareIcon className="w-6 h-6 group-hover:text-green-500" />
                                 <span className="text-sm font-semibold">{post.share_count || 0}</span>
                             </button>
+                            {canMint && (
+                                <button onClick={() => setIsMintModalOpen(true)} className="flex items-center space-x-1.5 group">
+                                    <DiamondIcon className="w-6 h-6 group-hover:text-purple-500" />
+                                </button>
+                            )}
                         </div>
                         <button onClick={handleBookmark} className="group">
                            <BookmarksIcon className={`w-6 h-6 group-hover:text-yellow-500 ${isBookmarked ? 'text-yellow-500 fill-current' : ''}`} />

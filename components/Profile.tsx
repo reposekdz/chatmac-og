@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Post, User, Highlight } from '../types';
+import { Socket } from 'socket.io-client';
+import { Post, User, Highlight, ServerToClientEvents, ClientToServerEvents } from '../types';
 import PostCard from './PostCard';
 import { loggedInUser } from '../App';
 import { CalendarIcon, LinkIcon, ShieldCheckIcon, StarIcon, MoreIcon } from './icons';
@@ -7,11 +8,25 @@ import VerificationModal from './VerificationModal';
 import MonetizationModal from './MonetizationModal';
 import PostDetailModal from './PostDetailModal';
 import HighlightsReel from './HighlightsReel';
+import NFTCard from './NFTCard';
 
-const Profile: React.FC = () => {
+interface Nft {
+    id: number;
+    price: number;
+    post: Post;
+    creator: User;
+    owner: User;
+}
+
+interface ProfileProps {
+    socket: Socket<ServerToClientEvents, ClientToServerEvents>;
+}
+
+const Profile: React.FC<ProfileProps> = ({ socket }) => {
     // For simplicity, this component will always show the logged in user's profile.
     const [user, setUser] = useState<User | null>(loggedInUser);
     const [posts, setPosts] = useState<Post[]>([]);
+    const [nfts, setNfts] = useState<Nft[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('posts');
     const [isVerificationModalOpen, setVerificationModalOpen] = useState(false);
@@ -19,26 +34,53 @@ const Profile: React.FC = () => {
     const [activePostDetail, setActivePostDetail] = useState<Post | null>(null);
 
     useEffect(() => {
-        if (user) {
-            const fetchUserPosts = async () => {
-                try {
-                    setLoading(true);
+        if (!user) return;
+        
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                if (activeTab === 'posts') {
                     const res = await fetch(`/api/posts/user/${user.handle}`);
                     const data = await res.json();
                     setPosts(data);
-                } catch (error) {
-                    console.error("Failed to fetch user posts", error);
-                } finally {
-                    setLoading(false);
+                } else if (activeTab === 'nfts') {
+                    const res = await fetch(`/api/nfts/user/${user.id}`);
+                    const data = await res.json();
+                    setNfts(data);
                 }
-            };
-            fetchUserPosts();
-        }
-    }, [user]);
+            } catch (error) {
+                console.error("Failed to fetch data", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, [user, activeTab]);
     
     if (!user) {
         return <div>Loading profile...</div>;
     }
+
+    const renderTabContent = () => {
+        if (loading) return <p className="text-center p-8">Loading...</p>;
+
+        switch(activeTab) {
+            case 'posts':
+                return posts.map(post => <PostCard key={post.id} post={post} openPostDetail={setActivePostDetail} socket={socket} />);
+            case 'nfts':
+                return (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4">
+                        {nfts.map(nft => <NFTCard key={nft.id} nft={nft} />)}
+                    </div>
+                );
+            case 'replies':
+                return <p className="text-center p-8">Replies will be shown here.</p>;
+            case 'media':
+                 return <p className="text-center p-8">Media will be shown here.</p>;
+            default:
+                return null;
+        }
+    };
 
     return (
         <>
@@ -47,11 +89,11 @@ const Profile: React.FC = () => {
                     <img src={`https://picsum.photos/seed/${user.id}/1000/400`} className="w-full h-full object-cover" alt="Profile banner" />
                 </div>
                 <div className="p-6">
-                    <div className="flex justify-between items-start">
+                    <div className="flex flex-col sm:flex-row justify-between items-start">
                         <div className="-mt-20">
                             <img src={user.avatar} alt={user.name} className="w-32 h-32 rounded-full border-4 border-white dark:border-gray-900" />
                         </div>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 mt-4 sm:mt-0 self-end sm:self-auto">
                              <button onClick={() => setMonetizationModalOpen(true)} className="p-2 rounded-full border-2 border-yellow-400 text-yellow-400 hover:bg-yellow-400/10"><StarIcon className="w-5 h-5"/></button>
                              <button onClick={() => setVerificationModalOpen(true)} className="p-2 rounded-full border-2 border-blue-500 text-blue-500 hover:bg-blue-500/10"><ShieldCheckIcon className="w-5 h-5"/></button>
                             <button className="p-2 rounded-full border-2 border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"><MoreIcon className="w-5 h-5"/></button>
@@ -77,17 +119,18 @@ const Profile: React.FC = () => {
                 </div>
                  <div className="border-b border-gray-200 dark:border-gray-800 flex">
                     <button onClick={() => setActiveTab('posts')} className={`flex-1 p-3 font-semibold text-center ${activeTab === 'posts' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}>Posts</button>
+                     <button onClick={() => setActiveTab('nfts')} className={`flex-1 p-3 font-semibold text-center ${activeTab === 'nfts' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}>NFTs</button>
                     <button onClick={() => setActiveTab('replies')} className={`flex-1 p-3 font-semibold text-center ${activeTab === 'replies' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}>Replies</button>
                     <button onClick={() => setActiveTab('media')} className={`flex-1 p-3 font-semibold text-center ${activeTab === 'media' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}>Media</button>
                 </div>
             </div>
             <div className="mt-6 space-y-6">
-                 {loading ? <p>Loading posts...</p> : posts.map(post => <PostCard key={post.id} post={post} openPostDetail={setActivePostDetail}/>)}
+                 {renderTabContent()}
             </div>
             
             {isVerificationModalOpen && <VerificationModal user={user} onClose={() => setVerificationModalOpen(false)} />}
             {isMonetizationModalOpen && <MonetizationModal user={user} onClose={() => setMonetizationModalOpen(false)} />}
-            {activePostDetail && <PostDetailModal post={activePostDetail} onClose={() => setActivePostDetail(null)} />}
+            {activePostDetail && <PostDetailModal post={activePostDetail} onClose={() => setActivePostDetail(null)} socket={socket} />}
         </>
     );
 };

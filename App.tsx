@@ -32,7 +32,7 @@ export const loggedInUser: User = {
     status_emoji: '🌴'
 };
 
-export type View = 'home' | 'explore' | 'notifications' | 'messages' | 'bookmarks' | 'profile' | 'settings' | 'marketplace' | 'challenges' | 'journey' | 'rooms' | 'stage' | 'ads' | 'reels' | 'groups' | 'create' | 'accessibility';
+export type View = 'home' | 'explore' | 'notifications' | 'messages' | 'bookmarks' | 'profile' | 'settings' | 'marketplace' | 'challenges' | 'journey' | 'rooms' | 'stage' | 'ads' | 'reels' | 'groups' | 'create' | 'accessibility' | 'creatorhub' | 'events';
 export type Theme = 'light' | 'dark' | 'retro';
 export type Mood = 'default' | 'chill' | 'focus' | 'hype';
 
@@ -120,8 +120,8 @@ function App() {
         setView={setView} 
       />
 
-      <main className="max-w-screen-xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8 px-4 sm:px-6 lg:px-8 py-6">
-        <aside className="hidden lg:block lg:col-span-1">
+      <main className="max-w-screen-xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 px-4 sm:px-6 lg:px-8 py-6">
+        <aside className="hidden md:block md:col-span-1">
           <LeftAside 
             activeView={view} 
             setView={setView}
@@ -142,7 +142,7 @@ function App() {
           />
         </aside>
 
-        <div className="lg:col-span-2 min-w-0">
+        <div className="col-span-1 md:col-span-2 min-w-0">
           <MainContent
             activeView={view}
             setView={setView}
@@ -162,8 +162,8 @@ function App() {
           />
         </div>
 
-        <aside className="hidden lg:block lg:col-span-1">
-          <RightAside />
+        <aside className="hidden md:block md:col-span-1">
+          <RightAside setView={setView} />
         </aside>
       </main>
 

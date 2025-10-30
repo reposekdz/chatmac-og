@@ -1,0 +1,171 @@
+
+from flask import Flask, jsonify
+from flask_cors import CORS
+import mysql.connector
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+from PIL import Image
+import requests
+from io import BytesIO
+from skimage.transform import resize
+import os
+
+# --- Configuration ---
+# It's better to use environment variables for database credentials
+DB_CONFIG = {
+    'user': os.getenv('DB_USER', 'root'),
+    'password': os.getenv('DB_PASSWORD', ''),
+    'host': os.getenv('DB_HOST', '127.0.0.1'),
+    'database': os.getenv('DB_NAME', 'chatmac_db')
+}
+
+# Weights for hybrid scoring
+TEXT_WEIGHT = 0.6
+IMAGE_WEIGHT = 0.4
+IMAGE_FEATURE_SIZE = 64 # The dimensions (N x N) for image resizing
+
+app = Flask(__name__)
+CORS(app)
+
+# --- Database Connection ---
+def get_db_connection():
+    try:
+        conn = mysql.connector.connect(**DB_CONFIG)
+        return conn
+    except mysql.connector.Error as err:
+        print(f"Error connecting to database: {err}")
+        return None
+
+# --- Computer Vision Feature Extraction ---
+def extract_image_features(image_url):
+    """
+    Fetches an image from a URL and extracts a feature vector.
+    
+    NOTE: In a production system, this would use a pre-trained deep learning
+    model like ResNet, VGG, or EfficientNet to generate meaningful embeddings.
+    For this environment, we simulate feature extraction without heavy dependencies.
+    """
+    feature_vector_length = IMAGE_FEATURE_SIZE * IMAGE_FEATURE_SIZE
+    if not image_url:
+        return np.zeros(feature_vector_length)
+    try:
+        response = requests.get(image_url, timeout=5)
+        response.raise_for_status()
+        
+        img = Image.open(BytesIO(response.content)).convert('RGB')
+        img_array = np.array(img, dtype=np.float32)
+        
+        # Resize to a standard size for consistent feature vector length
+        img_resized = resize(img_array, (IMAGE_FEATURE_SIZE, IMAGE_FEATURE_SIZE), anti_aliasing=True)
+        
+        # --- SIMULATED FEATURE EXTRACTION ---
+        # This is a placeholder for a real model's output. We create a simple
+        # feature vector by averaging color channels and flattening.
+        # A real model would produce a much more robust vector.
+        feature_vector = img_resized.mean(axis=2).flatten()
+        
+        # Normalize the vector to unit length
+        norm = np.linalg.norm(feature_vector)
+        if norm == 0:
+            return np.zeros(feature_vector_length)
+            
+        return feature_vector / norm
+
+    except Exception as e:
+        print(f"Could not process image {image_url}: {e}")
+        # Return a zero vector if image processing fails
+        return np.zeros(feature_vector_length)
+
+
+# --- Recommendation Logic ---
+@app.route('/recommendations/<int:user_id>', methods=['GET'])
+def get_recommendations(user_id):
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"error": "Database connection failed"}), 500
+
+    try:
+        # 1. Fetch all posts to create a corpus and candidate set
+        query_all_posts = "SELECT id, content, image_url FROM posts"
+        all_posts_df = pd.read_sql(query_all_posts, conn)
+        
+        if all_posts_df.empty:
+            return jsonify({"post_ids": []})
+
+        # 2. Fetch posts liked by the user to build their profile
+        query_liked_posts = f"""
+            SELECT p.id, p.content, p.image_url 
+            FROM posts p
+            JOIN post_likes pl ON p.id = pl.post_id
+            WHERE pl.user_id = {user_id}
+        """
+        liked_posts_df = pd.read_sql(query_liked_posts, conn)
+
+        if liked_posts_df.empty:
+            # Fallback for new users: return most recent posts
+            recommended_ids = all_posts_df.sort_values(by='id', ascending=False).head(20)['id'].tolist()
+            return jsonify({"post_ids": recommended_ids})
+
+        # --- Build User Profile ---
+        # a) Text Profile (TF-IDF)
+        all_posts_df['content'] = all_posts_df['content'].fillna('') # Handle potential null content
+        tfidf_vectorizer = TfidfVectorizer(stop_words='english', max_df=0.8, min_df=2)
+        tfidf_matrix = tfidf_vectorizer.fit_transform(all_posts_df['content'])
+        
+        liked_indices = all_posts_df[all_posts_df['id'].isin(liked_posts_df['id'])].index
+        user_text_profile = tfidf_matrix[liked_indices].mean(axis=0)
+
+        # b) Visual Profile (Image Features)
+        print("Extracting image features for user profile...")
+        liked_posts_df['image_features'] = liked_posts_df['image_url'].apply(extract_image_features)
+        
+        valid_features = [f for f in liked_posts_df['image_features'] if np.any(f)]
+        if not valid_features:
+            user_visual_profile = np.zeros(IMAGE_FEATURE_SIZE * IMAGE_FEATURE_SIZE)
+        else:
+            user_visual_profile = np.mean(valid_features, axis=0)
+
+        # --- Score Candidate Posts ---
+        print("Scoring candidate posts...")
+        candidate_posts_df = all_posts_df[~all_posts_df['id'].isin(liked_posts_df['id'])].copy()
+        if candidate_posts_df.empty:
+             return jsonify({"post_ids": []}) # User has liked all posts
+        
+        # Calculate text similarity
+        candidate_indices = candidate_posts_df.index
+        text_similarities = cosine_similarity(user_text_profile, tfidf_matrix[candidate_indices]).flatten()
+        candidate_posts_df['text_score'] = text_similarities
+        
+        # Calculate image similarity
+        candidate_posts_df['image_features'] = candidate_posts_df['image_url'].apply(extract_image_features)
+        
+        if not candidate_posts_df['image_features'].empty and np.any(user_visual_profile):
+            image_features_matrix = np.vstack(candidate_posts_df['image_features'].values)
+            image_similarities = cosine_similarity(user_visual_profile.reshape(1, -1), image_features_matrix).flatten()
+            candidate_posts_df['image_score'] = image_similarities
+        else:
+            candidate_posts_df['image_score'] = 0
+
+        # --- Hybrid Score ---
+        candidate_posts_df['hybrid_score'] = (
+            TEXT_WEIGHT * candidate_posts_df['text_score'] +
+            IMAGE_WEIGHT * candidate_posts_df['image_score']
+        )
+        
+        # --- Get Top Recommendations ---
+        recommended_posts = candidate_posts_df.sort_values(by='hybrid_score', ascending=False).head(20)
+        recommended_ids = recommended_posts['id'].tolist()
+
+        return jsonify({"post_ids": recommended_ids})
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return jsonify({"error": "Could not generate recommendations"}), 500
+    finally:
+        if conn and conn.is_connected():
+            conn.close()
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)

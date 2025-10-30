@@ -1,5 +1,5 @@
 -- Drop tables if they exist to start fresh
-DROP TABLE IF EXISTS story_highlights, highlights, challenge_submissions, user_achievements, achievements, challenges, poll_votes, poll_options, polls, reports, verification_applications, subscriptions, bookmarks, post_likes, story_comments, story_likes, comments, notifications, messages, conversation_participants, conversations, marketplace_listings, reels, stories, followers, posts, users;
+DROP TABLE IF EXISTS nfts, story_highlights, highlights, challenge_submissions, user_achievements, achievements, challenges, poll_votes, poll_options, polls, reports, verification_applications, subscriptions, bookmarks, post_likes, story_comments, story_likes, comments, notifications, messages, conversation_participants, conversations, marketplace_listings, reels, stories, followers, posts, users;
 
 -- Users Table
 CREATE TABLE users (
@@ -68,10 +68,27 @@ CREATE TABLE posts (
     poll_id INT,
     share_count INT DEFAULT 0,
     original_post_id INT,
+    moderation_status ENUM('approved', 'pending_review', 'rejected') DEFAULT 'approved' NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE SET NULL,
     FOREIGN KEY (original_post_id) REFERENCES posts(id) ON DELETE SET NULL
 );
+
+-- NFTs Table
+CREATE TABLE nfts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    creator_id INT NOT NULL,
+    owner_id INT NOT NULL,
+    price INT,
+    mint_transaction_hash VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY (post_id)
+);
+
 
 -- Comments Table
 CREATE TABLE comments (

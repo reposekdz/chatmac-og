@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { MarketplaceIcon, SearchIcon, XIcon, StarIcon, CoinIcon, ImageIcon } from './icons';
-import { MarketplaceListing } from '../types';
+import { MarketplaceListing, Post, User } from '../types';
 import { useWallet } from '../hooks/useWallet';
 import { loggedInUser } from '../App';
+import NFTCard from './NFTCard';
+
+interface Nft {
+    id: number;
+    price: number;
+    post: Post;
+    creator: User;
+    owner: User;
+}
 
 interface CreateListingModalProps {
     onClose: () => void;
@@ -63,9 +72,11 @@ const CreateListingModal: React.FC<CreateListingModalProps> = ({ onClose, onList
 
 const Marketplace: React.FC<{ coins: number, setCoins: (c: number | ((prev: number) => number)) => void }> = ({ coins, setCoins }) => {
     const [listings, setListings] = useState<MarketplaceListing[]>([]);
+    const [nfts, setNfts] = useState<Nft[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isCreateOpen, setCreateOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState('goods');
     const { isConnected, address, connect } = useWallet();
 
     const fetchListings = async () => {
@@ -81,10 +92,28 @@ const Marketplace: React.FC<{ coins: number, setCoins: (c: number | ((prev: numb
             setLoading(false);
         }
     };
+    
+     const fetchNfts = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch('/api/nfts');
+            if (!response.ok) throw new Error('Failed to fetch NFTs');
+            const data = await response.json();
+            setNfts(data);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Unknown error');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        fetchListings();
-    }, []);
+        if (activeTab === 'goods') {
+            fetchListings();
+        } else {
+            fetchNfts();
+        }
+    }, [activeTab]);
     
     const handleBuy = async (item: MarketplaceListing) => {
         if (!isConnected) {
@@ -121,7 +150,7 @@ const Marketplace: React.FC<{ coins: number, setCoins: (c: number | ((prev: numb
         <>
             {isCreateOpen && <CreateListingModal onClose={() => setCreateOpen(false)} onListingCreated={fetchListings} />}
             <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 card space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-center space-x-3">
                         <MarketplaceIcon className="w-8 h-8 text-indigo-500" />
                         <div>
@@ -129,18 +158,20 @@ const Marketplace: React.FC<{ coins: number, setCoins: (c: number | ((prev: numb
                             <p className="text-gray-600 dark:text-gray-400">Buy and sell goods with Coins.</p>
                         </div>
                     </div>
-                    <button onClick={() => setCreateOpen(true)} className="bg-green-500 text-white font-bold py-2 px-4 rounded-full">Create Listing</button>
+                    <button onClick={() => setCreateOpen(true)} className="bg-green-500 text-white font-bold py-2 px-4 rounded-full self-start sm:self-center">Create Listing</button>
                 </div>
 
-                <div className="relative">
-                    <SearchIcon className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                    <input type="text" placeholder="Search for products..." className="w-full bg-gray-100 dark:bg-gray-800 rounded-full pl-12 pr-4 py-3"/>
+                <div className="border-b border-gray-200 dark:border-gray-800 flex">
+                    <button onClick={() => setActiveTab('goods')} className={`flex-1 p-3 font-semibold text-center ${activeTab === 'goods' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}>Goods</button>
+                    <button onClick={() => setActiveTab('nfts')} className={`flex-1 p-3 font-semibold text-center ${activeTab === 'nfts' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}>NFTs</button>
                 </div>
 
-                {loading && <p>Loading listings...</p>}
+
+                {loading && <p>Loading...</p>}
                 {error && <p className="text-red-500">Error: {error}</p>}
-                {!loading && !error && (
-                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                {activeTab === 'goods' && !loading && !error && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {listings.map(item => (
                             <div key={item.id} className="bg-gray-50 dark:bg-gray-800/50 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 group flex flex-col">
                                 <img src={item.image_url} alt={item.name} className="w-full h-40 object-cover group-hover:scale-105 transition-transform"/>
@@ -154,6 +185,14 @@ const Marketplace: React.FC<{ coins: number, setCoins: (c: number | ((prev: numb
                                     </div>
                                 </div>
                             </div>
+                        ))}
+                    </div>
+                )}
+
+                 {activeTab === 'nfts' && !loading && !error && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {nfts.map(nft => (
+                           <NFTCard key={nft.id} nft={nft} showBuyButton={true} />
                         ))}
                     </div>
                 )}

@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Post, Comment } from '../types';
+import { Socket } from 'socket.io-client';
+import { Post, Comment, ServerToClientEvents, ClientToServerEvents } from '../types';
 import { XIcon } from './icons';
 import PostCard from './PostCard';
 import { loggedInUser } from '../App';
@@ -8,9 +9,10 @@ import { loggedInUser } from '../App';
 interface PostDetailModalProps {
     post: Post;
     onClose: () => void;
+    socket: Socket<ServerToClientEvents, ClientToServerEvents>;
 }
 
-const PostDetailModal: React.FC<PostDetailModalProps> = ({ post, onClose }) => {
+const PostDetailModal: React.FC<PostDetailModalProps> = ({ post, onClose, socket }) => {
     const [comments, setComments] = useState<Comment[]>([]);
     const [newComment, setNewComment] = useState('');
 
@@ -18,20 +20,41 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({ post, onClose }) => {
         fetch(`/api/posts/${post.id}/comments`)
             .then(res => res.json())
             .then(data => setComments(data));
-    }, [post.id]);
+
+        socket.emit('joinRoom', `post:${post.id}`);
+
+        const handleNewComment = (data: { postId: number; comment: Comment; }) => {
+            if (data.postId === post.id) {
+                setComments(prev => [data.comment, ...prev]);
+            }
+        };
+
+        socket.on('post:newComment', handleNewComment);
+
+        return () => {
+            socket.off('post:newComment', handleNewComment);
+        };
+    }, [post.id, socket]);
 
     const handleCommentSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newComment.trim()) return;
         
-        const res = await fetch(`/api/posts/${post.id}/comments`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: loggedInUser.id, content: newComment }),
-        });
-        const createdComment = await res.json();
-        setComments(prev => [createdComment, ...prev]);
+        // Remove optimistic update, rely on socket event for UI change
+        const currentCommentText = newComment;
         setNewComment('');
+        
+        try {
+            await fetch(`/api/posts/${post.id}/comments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: loggedInUser.id, content: currentCommentText }),
+            });
+        } catch (error) {
+            console.error("Failed to post comment:", error);
+            // Optionally show an error to the user and restore the text area
+            setNewComment(currentCommentText);
+        }
     };
 
     return (
@@ -42,7 +65,7 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({ post, onClose }) => {
                     <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"><XIcon className="w-5 h-5"/></button>
                 </div>
                 <div className="flex-grow overflow-y-auto">
-                    <PostCard post={post} />
+                    <PostCard post={post} socket={socket} />
                     <div className="p-4 space-y-4">
                         {comments.map(comment => (
                             <div key={comment.id} className="flex items-start space-x-3">

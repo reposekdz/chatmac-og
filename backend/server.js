@@ -22,6 +22,7 @@ const challengesRouter = require('./api/routes/challenges');
 const achievementsRouter = require('./api/routes/achievements');
 const highlightsRouter = require('./api/routes/highlights');
 const searchRouter = require('./api/routes/search');
+const nftsRouter = require('./api/routes/nfts');
 
 const app = express();
 const server = http.createServer(app);
@@ -62,6 +63,7 @@ app.use('/api/challenges', challengesRouter);
 app.use('/api/achievements', achievementsRouter);
 app.use('/api/highlights', highlightsRouter);
 app.use('/api/search', searchRouter);
+app.use('/api/nfts', nftsRouter);
 
 
 server.listen(PORT, () => {

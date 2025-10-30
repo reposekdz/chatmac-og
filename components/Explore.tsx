@@ -67,7 +67,7 @@ const Explore = () => {
                 </div>
             </div>
             
-            <div className="columns-2 md:columns-3 gap-4">
+            <div className="columns-2 sm:columns-3 gap-4">
                 {exploreData.map((item) => (
                     <button onClick={() => setSelectedItem(item)} key={item.id} className="mb-4 break-inside-avoid relative group">
                         <img src={item.url} alt={item.title} className="w-full rounded-2xl"/>

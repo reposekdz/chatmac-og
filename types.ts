@@ -1,4 +1,5 @@
 
+
 export interface User {
     id: number;
     name: string;
@@ -183,6 +184,8 @@ export interface ServerToClientEvents {
   'video-answer': (data: { answer: any }) => void;
   'ice-candidate': (data: { candidate: any }) => void;
   'call-ended': () => void;
+  'post:likeUpdate': (data: { postId: number; likes_count: number; }) => void;
+  'post:newComment': (data: { postId: number; comment: Comment; comments_count: number; }) => void;
 }
 
 export interface ClientToServerEvents {
