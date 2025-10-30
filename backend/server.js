@@ -21,6 +21,7 @@ const verificationRouter = require('./api/routes/verification');
 const challengesRouter = require('./api/routes/challenges');
 const achievementsRouter = require('./api/routes/achievements');
 const highlightsRouter = require('./api/routes/highlights');
+const searchRouter = require('./api/routes/search');
 
 const app = express();
 const server = http.createServer(app);
@@ -60,6 +61,7 @@ app.use('/api/verification', verificationRouter);
 app.use('/api/challenges', challengesRouter);
 app.use('/api/achievements', achievementsRouter);
 app.use('/api/highlights', highlightsRouter);
+app.use('/api/search', searchRouter);
 
 
 server.listen(PORT, () => {

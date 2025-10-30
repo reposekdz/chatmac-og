@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ChatMac</title>
+    <title>Orrange</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -149,6 +149,21 @@
         animation: float-up 3s ease-out forwards;
         pointer-events: none;
       }
+      
+      /* Accessibility High Contrast Mode */
+      body.high-contrast {
+        --color-bg: #000 !important;
+        --color-text: #FFF !important;
+        --color-card-bg: #000 !important;
+        --color-border: #FFF !important;
+        --color-primary-500: #FFFF00 !important;
+        --color-primary-600: #FFFF00 !important;
+      }
+      .high-contrast .dark\:bg-gray-950, .high-contrast .bg-gray-100 { background-color: var(--color-bg); }
+      .high-contrast .dark\:text-gray-100, .high-contrast .text-gray-900 { color: var(--color-text); }
+      .high-contrast .card { background-color: var(--color-card-bg); border: 2px solid var(--color-border); }
+      .high-contrast .dark\:border-gray-800, .high-contrast .border-gray-200 { border-color: var(--color-border); }
+      .high-contrast button { color: var(--color-text) !important; }
 
     </style>
 </head>

@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
-import { SearchIcon, MessagesIcon, StarIcon, UserGroupIcon, CogIcon } from './icons';
+import { OrangeIcon, MessagesIcon, UserGroupIcon, CogIcon } from './icons';
 import { View } from '../App';
-import { Story } from '../types';
 import NavMenuModal from './NavMenuModal';
 import WalletConnectButton from './WalletConnectButton';
-import StoryReel from './StoryReel';
+import GlobalSearch from './GlobalSearch';
 
 interface HeaderProps {
     setView: (view: View) => void;
-    setViewingStory: (view: { stories: Story[], startIndex: number } | null) => void;
-    setCreateStoryModalOpen: (isOpen: boolean) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ setView, setViewingStory, setCreateStoryModalOpen }) => {
+const Header: React.FC<HeaderProps> = ({ setView }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     return (
         <>
@@ -20,13 +17,13 @@ const Header: React.FC<HeaderProps> = ({ setView, setViewingStory, setCreateStor
             <div className="max-w-screen-xl mx-auto flex items-center justify-between h-20 px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center space-x-4">
                     <button onClick={() => setView('home')} className="flex items-center space-x-2">
-                        <StarIcon className="w-8 h-8 text-orange-500" />
-                        <span className="text-xl font-bold text-gray-800 dark:text-gray-200 hidden sm:block">ChatMac</span>
+                        <OrangeIcon className="w-8 h-8 text-orange-500" />
+                        <span className="text-xl font-bold text-gray-800 dark:text-gray-200 hidden sm:block">Orrange</span>
                     </button>
                 </div>
 
                 <div className="flex-grow flex items-center justify-center px-4">
-                     <StoryReel setViewingStory={setViewingStory} setCreateStoryModalOpen={setCreateStoryModalOpen} isHeaderVersion={true} />
+                     <GlobalSearch setView={setView} />
                 </div>
 
                 <div className="flex items-center space-x-3">

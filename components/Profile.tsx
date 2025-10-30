@@ -1,12 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
-import { Post, User } from '../types';
+import { Post, User, Highlight } from '../types';
 import PostCard from './PostCard';
 import { loggedInUser } from '../App';
 import { CalendarIcon, LinkIcon, ShieldCheckIcon, StarIcon, MoreIcon } from './icons';
 import VerificationModal from './VerificationModal';
 import MonetizationModal from './MonetizationModal';
 import PostDetailModal from './PostDetailModal';
+import HighlightsReel from './HighlightsReel';
 
 const Profile: React.FC = () => {
     // For simplicity, this component will always show the logged in user's profile.
@@ -70,6 +70,9 @@ const Profile: React.FC = () => {
                             <p><span className="font-bold">{user.following_count}</span> Following</p>
                             <p><span className="font-bold">{user.followers_count}</span> Followers</p>
                         </div>
+                    </div>
+                    <div className="mt-6">
+                        <HighlightsReel userId={user.id} />
                     </div>
                 </div>
                  <div className="border-b border-gray-200 dark:border-gray-800 flex">

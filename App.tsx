@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import io, { Socket } from 'socket.io-client';
 import Header from './components/Header';
@@ -13,6 +12,7 @@ import StoryViewer from './components/StoryViewer';
 import StoryCommentsModal from './components/StoryCommentsModal';
 import VideoCallModal from './components/VideoCallModal';
 import Toast from './components/Toast';
+import AIAssistModal from './components/AIAssistModal';
 import { User, Post, Story, StoryComment, Achievement, Notification, ServerToClientEvents, ClientToServerEvents } from './types';
 
 export const loggedInUser: User = {
@@ -32,7 +32,7 @@ export const loggedInUser: User = {
     status_emoji: '🌴'
 };
 
-export type View = 'home' | 'explore' | 'notifications' | 'messages' | 'bookmarks' | 'profile' | 'settings' | 'marketplace' | 'challenges' | 'journey' | 'rooms' | 'stage' | 'ads' | 'reels' | 'groups' | 'create';
+export type View = 'home' | 'explore' | 'notifications' | 'messages' | 'bookmarks' | 'profile' | 'settings' | 'marketplace' | 'challenges' | 'journey' | 'rooms' | 'stage' | 'ads' | 'reels' | 'groups' | 'create' | 'accessibility';
 export type Theme = 'light' | 'dark' | 'retro';
 export type Mood = 'default' | 'chill' | 'focus' | 'hype';
 
@@ -49,11 +49,16 @@ function App() {
   const [isOffline, setIsOffline] = useState(false);
   const [offlineQueueCount, setOfflineQueueCount] = useState(0);
 
+  // New Accessibility State
+  const [isHighContrast, setHighContrast] = useState(false);
+  const [fontSize, setFontSize] = useState(16);
+
   const [isCreatePostModalOpen, setCreatePostModalOpen] = useState(false);
   const [isCreateStoryModalOpen, setCreateStoryModalOpen] = useState(false);
   const [isCreateReelModalOpen, setCreateReelModalOpen] = useState(false);
   const [isStoryViewerOpen, setStoryViewerOpen] = useState<{ stories: Story[], startIndex: number } | null>(null);
   const [isStoryCommentsOpen, setStoryCommentsOpen] = useState<Story | null>(null);
+  const [isAIAssistModalOpen, setAIAssistModalOpen] = useState(false);
   
   const [videoCallState, setVideoCallState] = useState<{ isActive: boolean; withUser?: User; isReceiving?: boolean; offer?: any }>({ isActive: false });
 
@@ -77,7 +82,9 @@ function App() {
   useEffect(() => {
     document.documentElement.className = theme;
     document.body.className = `bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 theme-${theme} mood-${mood}`;
-  }, [theme, mood]);
+    document.body.classList.toggle('high-contrast', isHighContrast);
+    document.documentElement.style.fontSize = `${fontSize}px`;
+  }, [theme, mood, isHighContrast, fontSize]);
 
   useEffect(() => {
     socket.on('connect', () => {
@@ -111,8 +118,6 @@ function App() {
     <div className={`app-container font-sans`}>
       <Header 
         setView={setView} 
-        setViewingStory={setStoryViewerOpen}
-        setCreateStoryModalOpen={setCreateStoryModalOpen}
       />
 
       <main className="max-w-screen-xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8 px-4 sm:px-6 lg:px-8 py-6">
@@ -153,6 +158,7 @@ function App() {
             postsVersion={postsVersion}
             refreshPosts={refreshPosts}
             socket={socket}
+            accessibilitySettings={{ isHighContrast, setHighContrast, fontSize, setFontSize }}
           />
         </div>
 
@@ -163,13 +169,21 @@ function App() {
 
       <BottomNav activeView={view} setView={setView} setCreatePostModalOpen={setCreatePostModalOpen} />
 
-      {isCreatePostModalOpen && <CreatePostModal onClose={() => setCreatePostModalOpen(false)} onPostCreated={refreshPosts} />}
+      {isCreatePostModalOpen && <CreatePostModal onClose={() => setCreatePostModalOpen(false)} onPostCreated={refreshPosts} openAIAssist={() => setAIAssistModalOpen(true)} />}
       {isCreateStoryModalOpen && <CreateStoryModal onClose={() => setCreateStoryModalOpen(false)} />}
       {isCreateReelModalOpen && <CreateReelModal onClose={() => setCreateReelModalOpen(false)} />}
       {isStoryViewerOpen && <StoryViewer stories={isStoryViewerOpen.stories} startIndex={isStoryViewerOpen.startIndex} onClose={() => setStoryViewerOpen(null)} openComments={setStoryCommentsOpen}/>}
       {isStoryCommentsOpen && <StoryCommentsModal story={isStoryCommentsOpen} onClose={() => setStoryCommentsOpen(null)} onCommentPosted={() => {}} />}
       {videoCallState.isActive && <VideoCallModal onClose={() => setVideoCallState({isActive: false})} user={videoCallState.withUser!} socket={socket} isReceiving={videoCallState.isReceiving} offer={videoCallState.offer} />}
       {toast && <Toast message={toast.message} achievement={toast.achievement} notification={toast.notification} onDismiss={() => setToast(null)} />}
+      {isAIAssistModalOpen && <AIAssistModal onClose={() => setAIAssistModalOpen(false)} onTextGenerated={(text) => {
+        // This is a bit of a hack to pass data back to the CreatePostModal
+        // In a real app with context/redux this would be cleaner
+        const event = new CustomEvent('aiTextGenerated', { detail: text });
+        window.dispatchEvent(event);
+        setAIAssistModalOpen(false);
+        setCreatePostModalOpen(true);
+      }} />}
     </div>
   );
 }

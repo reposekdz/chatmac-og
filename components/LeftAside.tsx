@@ -1,5 +1,5 @@
 import React from 'react';
-import { HomeIcon, ExploreIcon, NotificationsIcon, MessagesIcon, BookmarksIcon, ProfileIcon, MarketplaceIcon, TrophyIcon, MapIcon, UsersIcon, SpeakerWaveIcon, MoreIcon, SunIcon, MoonIcon, DesktopComputerIcon, ShieldExclamationIcon, EyeOffIcon, SparklesIcon, ViewBoardsIcon, CloudArrowDownIcon, CogIcon, FireIcon, MegaphoneIcon, FilmIcon } from './icons';
+import { HomeIcon, ExploreIcon, NotificationsIcon, MessagesIcon, BookmarksIcon, ProfileIcon, MarketplaceIcon, TrophyIcon, MapIcon, UsersIcon, SpeakerWaveIcon, MoreIcon, SunIcon, MoonIcon, DesktopComputerIcon, ShieldExclamationIcon, EyeOffIcon, SparklesIcon, ViewBoardsIcon, CloudArrowDownIcon, CogIcon, FireIcon, MegaphoneIcon, FilmIcon, AccessibilityIcon } from './icons';
 import { View, Theme, Mood } from '../App';
 
 interface NavLinkProps {
@@ -52,6 +52,7 @@ const LeftAside: React.FC<LeftAsideProps> = (props) => {
         { view: 'ads', icon: MegaphoneIcon, label: 'Ads Manager' },
         { view: 'profile', icon: ProfileIcon, label: 'Profile' },
         { view: 'settings', icon: CogIcon, label: 'Settings' },
+        { view: 'accessibility', icon: AccessibilityIcon, label: 'Accessibility' },
     ];
     
     const moods: { name: Mood, label: string, color: string }[] = [

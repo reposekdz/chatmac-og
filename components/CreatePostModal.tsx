@@ -1,17 +1,35 @@
-
-import React, { useState } from 'react';
-import { XIcon, ImageIcon, PollIcon, GlobeAltIcon } from './icons';
+import React, { useState, useEffect } from 'react';
+import { XIcon, ImageIcon, PollIcon, GlobeAltIcon, SparklesIcon } from './icons';
 import { loggedInUser } from '../App';
 
 interface CreatePostModalProps {
     onClose: () => void;
     onPostCreated: () => void;
+    openAIAssist: () => void;
 }
 
-const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreated }) => {
+const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreated, openAIAssist }) => {
     const [content, setContent] = useState('');
     const [imageUrl, setImageUrl] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        const handleAIText = (event: Event) => {
+            const customEvent = event as CustomEvent<string>;
+            setContent(prev => prev + customEvent.detail);
+        };
+
+        window.addEventListener('aiTextGenerated', handleAIText);
+        return () => {
+            window.removeEventListener('aiTextGenerated', handleAIText);
+        };
+    }, []);
+
+    const handleOpenAIAssist = () => {
+        onClose(); // Close this modal first
+        openAIAssist(); // Open the AI modal
+    };
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -78,6 +96,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
                             <button type="button" className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-blue-500"><ImageIcon className="w-6 h-6"/></button>
                             <button type="button" className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-green-500"><PollIcon className="w-6 h-6"/></button>
                             <button type="button" className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500"><GlobeAltIcon className="w-6 h-6"/></button>
+                            <button type="button" onClick={handleOpenAIAssist} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-purple-500"><SparklesIcon className="w-6 h-6"/></button>
                         </div>
                         <button type="submit" disabled={isSubmitting || !content.trim()} className="bg-orange-500 text-white font-bold py-2 px-6 rounded-full disabled:bg-orange-300">
                             {isSubmitting ? 'Posting...' : 'Post'}

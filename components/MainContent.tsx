@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Socket } from 'socket.io-client';
 import { View } from '../App';
@@ -22,6 +21,7 @@ import ReelsPage from './ReelsPage';
 import Groups from './Groups';
 import CreatePage from './CreatePage';
 import PostDetailModal from './PostDetailModal';
+import AccessibilityHub from './AccessibilityHub';
 
 interface HomeFeedProps {
     posts: Post[];
@@ -85,6 +85,12 @@ interface MainContentProps {
     postsVersion: number;
     refreshPosts: () => void;
     socket: Socket<ServerToClientEvents, ClientToServerEvents>;
+    accessibilitySettings: {
+        isHighContrast: boolean;
+        setHighContrast: (value: boolean) => void;
+        fontSize: number;
+        setFontSize: (value: number) => void;
+    };
 }
 
 const MainContent: React.FC<MainContentProps> = (props) => {
@@ -133,6 +139,8 @@ const MainContent: React.FC<MainContentProps> = (props) => {
                 setCreateStoryModalOpen={props.setCreateStoryModalOpen}
                 setCreateReelModalOpen={props.setCreateReelModalOpen}
                 />;
+        case 'accessibility':
+            return <AccessibilityHub settings={props.accessibilitySettings} />;
         default:
             return <HomeFeed 
                 posts={props.posts} 
