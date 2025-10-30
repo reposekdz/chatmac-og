@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../../db');
+const socketManager = require('../../services/socketManager');
 
 // GET /api/conversations?userId=... - Get all conversations for a user
 router.get('/', async (req, res) => {
@@ -72,7 +73,16 @@ router.post('/:id/messages', async (req, res) => {
             'INSERT INTO messages (conversation_id, sender_id, content) VALUES (?, ?, ?)',
             [conversationId, senderId, content]
         );
-        res.status(201).json({ id: result.insertId });
+        const [[newMessage]] = await db.query('SELECT * FROM messages WHERE id = ?', [result.insertId]);
+
+        // Emit message via socket
+        const io = req.app.get('io');
+        const [[recipient]] = await db.query('SELECT user_id FROM conversation_participants WHERE conversation_id = ? AND user_id != ?', [conversationId, senderId]);
+        if (recipient) {
+            io.to(`conversation:${conversationId}`).emit('newMessage', newMessage);
+        }
+
+        res.status(201).json(newMessage);
     } catch (error) {
         console.error('Error sending message:', error);
         res.status(500).json({ message: 'Error sending message' });

@@ -1,4 +1,5 @@
 
+
 const express = require('express');
 const router = express.Router();
 const db = require('../../db');
@@ -9,15 +10,17 @@ router.get('/nearby', async (req, res) => {
     if (!lat || !lon) {
         return res.status(400).json({ message: "Latitude and longitude are required" });
     }
-    // This is a simplified distance calculation. For production, use a more accurate formula or geospatial functions.
+    // FIX: Using a more correct, albeit simple, distance calculation (Euclidean distance squared).
+    // Assumes `latitude` and `longitude` columns exist on the `users` table.
     const query = `
-        SELECT id, name, handle, avatar
+        SELECT id, name, handle, avatar, isCommunityVerified
         FROM users 
-        ORDER BY (POW(?, 2) - POW(?, 2)) + (POW(?, 2) - POW(?, 2))
+        WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+        ORDER BY (POW(latitude - ?, 2) + POW(longitude - ?, 2)) ASC
         LIMIT 5;
     `;
     try {
-        const [users] = await db.query(query, [lat, 37, lon, -122]); // Dummy comparison point
+        const [users] = await db.query(query, [parseFloat(lat), parseFloat(lon)]);
         res.json(users);
     } catch (error) {
         console.error("Error fetching nearby users:", error);
@@ -48,7 +51,7 @@ router.get('/:handle', async (req, res) => {
     const viewerId = req.query.viewerId || 0;
 
     try {
-        const [[user]] = await db.query('SELECT id, name, handle, avatar, bio, created_at, is_verified, status_emoji FROM users WHERE handle = ?', [handle.substring(1)]);
+        const [[user]] = await db.query('SELECT id, name, handle, avatar, bio, created_at, is_verified, status_emoji FROM users WHERE handle = ?', [handle.startsWith('@') ? handle.substring(1) : handle]);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }

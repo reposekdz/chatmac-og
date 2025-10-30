@@ -1,17 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Socket } from 'socket.io-client';
 import { Conversation, Message, User } from '../types';
 import { SearchIcon, PaperAirplaneIcon, MoreIcon, VideoCameraIcon } from './icons';
 import { loggedInUser } from '../App';
 
 interface MessagesProps {
-  openVideoCall: () => void;
+  openVideoCall: (user: User) => void;
+  socket: Socket;
 }
 
-const Messages: React.FC<MessagesProps> = ({ openVideoCall }) => {
+const Messages: React.FC<MessagesProps> = ({ openVideoCall, socket }) => {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
+    const [onlineUsers, setOnlineUsers] = useState<number[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const fetchConversations = async () => {
@@ -30,10 +33,27 @@ const Messages: React.FC<MessagesProps> = ({ openVideoCall }) => {
 
     useEffect(() => {
         fetchConversations();
+        
+        socket.emit('getOnlineUsers', (users: number[]) => {
+            setOnlineUsers(users);
+        });
+
+        const handleUserOnline = (userId: number) => setOnlineUsers(prev => [...prev, userId]);
+        const handleUserOffline = (userId: number) => setOnlineUsers(prev => prev.filter(id => id !== userId));
+
+        socket.on('userOnline', handleUserOnline);
+        socket.on('userOffline', handleUserOffline);
+        
+        return () => {
+            socket.off('userOnline', handleUserOnline);
+            socket.off('userOffline', handleUserOffline);
+        };
     }, []);
 
     useEffect(() => {
         if (!activeConversation) return;
+
+        socket.emit('joinRoom', `conversation:${activeConversation.id}`);
 
         const fetchMessages = async () => {
             try {
@@ -48,9 +68,17 @@ const Messages: React.FC<MessagesProps> = ({ openVideoCall }) => {
 
         fetchMessages();
         
-        // Poll for new messages every 3 seconds
-        const intervalId = setInterval(fetchMessages, 3000);
-        return () => clearInterval(intervalId);
+        const handleNewMessage = (message: Message) => {
+            if (message.conversation_id === activeConversation.id) {
+                setMessages(prev => [message, ...prev]);
+            }
+        };
+
+        socket.on('newMessage', handleNewMessage);
+
+        return () => {
+            socket.off('newMessage', handleNewMessage);
+        };
 
     }, [activeConversation]);
 
@@ -62,13 +90,7 @@ const Messages: React.FC<MessagesProps> = ({ openVideoCall }) => {
         e.preventDefault();
         if (!newMessage.trim() || !activeConversation) return;
 
-        const optimisticMessage: Message = {
-            id: Date.now(),
-            sender_id: loggedInUser.id,
-            content: newMessage,
-            created_at: new Date().toISOString(),
-        };
-        setMessages(prev => [optimisticMessage, ...prev]);
+        // Optimistic update is now handled by the server echoing the message back via socket
         setNewMessage('');
 
         try {
@@ -77,11 +99,8 @@ const Messages: React.FC<MessagesProps> = ({ openVideoCall }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ senderId: loggedInUser.id, content: newMessage }),
             });
-            // Optionally re-fetch messages to confirm, but optimistic is faster
         } catch (error) {
             console.error('Failed to send message:', error);
-            // Revert optimistic update on failure
-            setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
         }
     };
     
@@ -114,7 +133,7 @@ const Messages: React.FC<MessagesProps> = ({ openVideoCall }) => {
                         <button key={convo.id} onClick={() => setActiveConversation(convo)} className={`w-full flex items-center space-x-3 p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-800 ${activeConversation?.id === convo.id ? 'bg-orange-50 dark:bg-orange-900/20' : ''}`}>
                             <div className="relative">
                                <img src={convo.participant.avatar} className="w-12 h-12 rounded-full"/>
-                               {/* {convo.isOnline && <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-900"></div>} */}
+                               {onlineUsers.includes(convo.participant.id) && <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-900"></div>}
                             </div>
                             <div className="flex-grow overflow-hidden">
                                 <p className="font-bold">{convo.participant.name}</p>
@@ -138,7 +157,7 @@ const Messages: React.FC<MessagesProps> = ({ openVideoCall }) => {
                                 <p className="text-sm text-gray-500 dark:text-gray-400">{activeConversation.participant.handle}</p>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <button onClick={openVideoCall} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"><VideoCameraIcon className="w-6 h-6"/></button>
+                                <button onClick={() => openVideoCall(activeConversation.participant)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"><VideoCameraIcon className="w-6 h-6"/></button>
                                 <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"><MoreIcon className="w-6 h-6"/></button>
                             </div>
                         </div>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { MapIcon, XIcon } from './icons';
 import { Post } from '../types';
@@ -8,7 +9,10 @@ interface Pin extends Post {
 }
 
 // Helper to convert lat/lng to pixel coordinates for a flat map
-const geoToPixel = (lat: number, lng: number) => {
+const geoToPixel = (lat: number | null | undefined, lng: number | null | undefined) => {
+    if (lat === null || lng === null || lat === undefined || lng === undefined) {
+        return { left: '50%', top: '50%' };
+    }
     const mapWidth = 500; // a base width for calculation
     const mapHeight = 250; // a base height
     const x = (lng + 180) * (mapWidth / 360);
@@ -31,10 +35,12 @@ const GeoTimeline: React.FC = () => {
         try {
             const res = await fetch('/api/posts/geotagged');
             const data: Post[] = await res.json();
-            const mappedPins = data.map(post => ({
-                ...post,
-                ...geoToPixel(post.latitude, post.longitude),
-            }));
+            const mappedPins = data
+                .filter(post => post.latitude != null && post.longitude != null)
+                .map(post => ({
+                    ...post,
+                    ...geoToPixel(post.latitude, post.longitude),
+                }));
             setPins(mappedPins);
         } catch (error) {
             console.error("Failed to fetch geotagged posts", error);
@@ -86,7 +92,7 @@ const GeoTimeline: React.FC = () => {
                         <p className="text-sm font-semibold">{activePin.content}</p>
                     </div>
                 </div>
-                <div className="absolute w-3 h-3 bg-white dark:bg-gray-900 transform rotate-45 -bottom-1.5 left-1/2 -translate-x-1.2"></div>
+                <div className="absolute w-3 h-3 bg-white dark:bg-gray-900 transform rotate-45 -bottom-1.5 left-1/2 -translate-x-1/2"></div>
             </div>
         )}
 

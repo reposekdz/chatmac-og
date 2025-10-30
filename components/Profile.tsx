@@ -1,69 +1,90 @@
 
 import React, { useState, useEffect } from 'react';
 import { Post, User } from '../types';
-import { loggedInUser } from '../App';
 import PostCard from './PostCard';
-import { CalendarIcon, LinkIcon, MapIcon, CogIcon, StarIcon, ShieldCheckIcon } from './icons';
-import MonetizationModal from './MonetizationModal';
+import { loggedInUser } from '../App';
+import { CalendarIcon, LinkIcon, ShieldCheckIcon, StarIcon, MoreIcon } from './icons';
 import VerificationModal from './VerificationModal';
+import MonetizationModal from './MonetizationModal';
+import PostDetailModal from './PostDetailModal';
 
 const Profile: React.FC = () => {
-    const [user] = useState<User>(loggedInUser);
+    // For simplicity, this component will always show the logged in user's profile.
+    const [user, setUser] = useState<User | null>(loggedInUser);
     const [posts, setPosts] = useState<Post[]>([]);
-    const [isMonetizationModalOpen, setMonetizationModalOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('posts');
     const [isVerificationModalOpen, setVerificationModalOpen] = useState(false);
+    const [isMonetizationModalOpen, setMonetizationModalOpen] = useState(false);
+    const [activePostDetail, setActivePostDetail] = useState<Post | null>(null);
 
     useEffect(() => {
-        fetch(`/api/posts?userId=${user.id}`)
-          .then(res => res.json())
-          .then(data => setPosts(data));
-    }, [user.id]);
+        if (user) {
+            const fetchUserPosts = async () => {
+                try {
+                    setLoading(true);
+                    const res = await fetch(`/api/posts/user/${user.handle}`);
+                    const data = await res.json();
+                    setPosts(data);
+                } catch (error) {
+                    console.error("Failed to fetch user posts", error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchUserPosts();
+        }
+    }, [user]);
+    
+    if (!user) {
+        return <div>Loading profile...</div>;
+    }
 
     return (
         <>
             <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 card overflow-hidden">
-                <div className="h-48 bg-gray-200 dark:bg-gray-800">
-                    <img src="https://picsum.photos/seed/header/1200/400" className="w-full h-full object-cover" alt="Profile banner"/>
+                <div className="h-48 bg-gray-200 dark:bg-gray-800 relative">
+                    <img src={`https://picsum.photos/seed/${user.id}/1000/400`} className="w-full h-full object-cover" alt="Profile banner" />
                 </div>
                 <div className="p-6">
-                    <div className="flex justify-between items-start -mt-24">
-                        <img src={user.avatar} className="w-36 h-36 rounded-full border-4 border-white dark:border-gray-900" alt="Profile avatar"/>
+                    <div className="flex justify-between items-start">
+                        <div className="-mt-20">
+                            <img src={user.avatar} alt={user.name} className="w-32 h-32 rounded-full border-4 border-white dark:border-gray-900" />
+                        </div>
                         <div className="flex items-center space-x-2">
-                           <button onClick={() => setMonetizationModalOpen(true)} className="p-2 bg-yellow-400 text-white rounded-full hover:bg-yellow-500" title="Monetization">
-                                <StarIcon className="w-5 h-5"/>
-                            </button>
-                             <button onClick={() => setVerificationModalOpen(true)} className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600" title="Get Verified">
-                                <ShieldCheckIcon className="w-5 h-5"/>
-                            </button>
-                            <button className="font-bold py-2 px-4 rounded-full border-2 border-orange-500 text-orange-500">Edit Profile</button>
+                             <button onClick={() => setMonetizationModalOpen(true)} className="p-2 rounded-full border-2 border-yellow-400 text-yellow-400 hover:bg-yellow-400/10"><StarIcon className="w-5 h-5"/></button>
+                             <button onClick={() => setVerificationModalOpen(true)} className="p-2 rounded-full border-2 border-blue-500 text-blue-500 hover:bg-blue-500/10"><ShieldCheckIcon className="w-5 h-5"/></button>
+                            <button className="p-2 rounded-full border-2 border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"><MoreIcon className="w-5 h-5"/></button>
+                            <button className="bg-orange-500 text-white font-bold py-2 px-4 rounded-full">Edit Profile</button>
                         </div>
                     </div>
                     <div className="mt-4">
-                        <h1 className="text-3xl font-bold">{user.name}</h1>
+                        <h1 className="text-3xl font-bold flex items-center space-x-2">{user.name} {user.status_emoji}</h1>
                         <p className="text-gray-500">{user.handle}</p>
-                    </div>
-                    <p className="mt-4">{user.bio}</p>
-                    <div className="flex items-center space-x-4 mt-4 text-sm text-gray-500">
-                        <div className="flex items-center space-x-1"><MapIcon className="w-4 h-4"/><span>San Francisco, CA</span></div>
-                        <div className="flex items-center space-x-1"><LinkIcon className="w-4 h-4"/><a>website.com</a></div>
-                        <div className="flex items-center space-x-1"><CalendarIcon className="w-4 h-4"/><span>Joined June 2023</span></div>
-                    </div>
-                     <div className="flex items-center space-x-6 mt-4">
-                        <p><span className="font-bold">{user.following_count}</span> <span className="text-gray-500">Following</span></p>
-                        <p><span className="font-bold">{user.followers_count}</span> <span className="text-gray-500">Followers</span></p>
+                        <p className="mt-2">{user.bio}</p>
+                        <div className="flex items-center space-x-4 text-sm text-gray-500 mt-2">
+                            <div className="flex items-center space-x-1"><LinkIcon className="w-4 h-4"/> <span>{user.handle}.com</span></div>
+                            <div className="flex items-center space-x-1"><CalendarIcon className="w-4 h-4"/> <span>Joined {new Date(user.created_at || Date.now()).toLocaleDateString()}</span></div>
+                        </div>
+                         <div className="flex items-center space-x-4 mt-2">
+                            <p><span className="font-bold">{user.following_count}</span> Following</p>
+                            <p><span className="font-bold">{user.followers_count}</span> Followers</p>
+                        </div>
                     </div>
                 </div>
-                 <div className="border-t border-gray-200 dark:border-gray-800">
-                    {/* Add tabs for Posts, Replies, Media, Likes */}
-                 </div>
+                 <div className="border-b border-gray-200 dark:border-gray-800 flex">
+                    <button onClick={() => setActiveTab('posts')} className={`flex-1 p-3 font-semibold text-center ${activeTab === 'posts' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}>Posts</button>
+                    <button onClick={() => setActiveTab('replies')} className={`flex-1 p-3 font-semibold text-center ${activeTab === 'replies' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}>Replies</button>
+                    <button onClick={() => setActiveTab('media')} className={`flex-1 p-3 font-semibold text-center ${activeTab === 'media' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}>Media</button>
+                </div>
             </div>
-
             <div className="mt-6 space-y-6">
-                {posts.map(post => <PostCard key={post.id} post={post} />)}
+                 {loading ? <p>Loading posts...</p> : posts.map(post => <PostCard key={post.id} post={post} openPostDetail={setActivePostDetail}/>)}
             </div>
-
-            {isMonetizationModalOpen && <MonetizationModal user={user} onClose={() => setMonetizationModalOpen(false)} />}
+            
             {isVerificationModalOpen && <VerificationModal user={user} onClose={() => setVerificationModalOpen(false)} />}
+            {isMonetizationModalOpen && <MonetizationModal user={user} onClose={() => setMonetizationModalOpen(false)} />}
+            {activePostDetail && <PostDetailModal post={activePostDetail} onClose={() => setActivePostDetail(null)} />}
         </>
     );
 };

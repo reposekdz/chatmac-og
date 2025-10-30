@@ -1,4 +1,3 @@
-
 export interface User {
     id: number;
     name: string;
@@ -14,6 +13,7 @@ export interface User {
     subscriptionPrice?: number;
     coins?: number;
     status_emoji?: string;
+    created_at?: string; // Added for profile page
 }
 
 export interface PollOption {
@@ -37,11 +37,14 @@ export interface Post {
     created_at: string;
     likes_count: number;
     comments_count: number;
+    share_count?: number;
     is_liked_by_user: boolean;
     is_bookmarked_by_user?: boolean;
     latitude?: number | null;
     longitude?: number | null;
     poll?: Poll | null;
+    original_post_id?: number | null;
+    original_post?: Post | null;
 }
 
 export interface Comment {
@@ -149,6 +152,7 @@ export interface Conversation {
 
 export interface Message {
     id: number;
+    conversation_id: number;
     sender_id: number;
     content: string;
     created_at: string;
@@ -158,7 +162,7 @@ export interface Notification {
     id: number;
     type: 'like' | 'comment' | 'follow' | 'mention' | 'system' | 'marketplace_purchase' | 'achievement_unlocked';
     actor: User;
-    post?: { id: number; content: string };
+    post?: { id: number; content?: string };
     content: string | null;
     created_at: string;
     is_read: boolean;

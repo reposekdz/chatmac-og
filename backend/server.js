@@ -1,6 +1,9 @@
-
 const express = require('express');
+const http = require('http');
+const { Server } = require("socket.io");
 const cors = require('cors');
+const socketManager = require('./services/socketManager');
+
 const postsRouter = require('./api/routes/posts');
 const storiesRouter = require('./api/routes/stories');
 const reelsRouter = require('./api/routes/reels');
@@ -20,10 +23,24 @@ const achievementsRouter = require('./api/routes/achievements');
 const highlightsRouter = require('./api/routes/highlights');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Allow all origins for simplicity
+    methods: ["GET", "POST"]
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+
+// Make io accessible to our routes
+app.set('io', io);
+
+// Initialize Socket.IO manager
+socketManager(io);
 
 // API Routes
 app.use('/api/posts', postsRouter);
@@ -45,6 +62,6 @@ app.use('/api/achievements', achievementsRouter);
 app.use('/api/highlights', highlightsRouter);
 
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
