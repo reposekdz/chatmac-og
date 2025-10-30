@@ -1,24 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapIcon, XIcon } from './icons';
+import { Post } from '../types';
 
-interface Pin {
-    id: number;
+interface Pin extends Post {
     top: string;
     left: string;
-    title: string;
-    content: string;
-    avatar: string;
 }
 
-const pins: Pin[] = [
-    { id: 1, top: '45%', left: '15%', title: 'Post from North America', content: 'Exploring the Rockies! 🏔️', avatar: 'https://picsum.photos/id/1015/50/50' },
-    { id: 2, top: '40%', left: '50%', title: 'Post from Europe', content: 'Paris is always a good idea.', avatar: 'https://picsum.photos/id/1011/50/50' },
-    { id: 3, top: '55%', left: '80%', title: 'Post from Australia', content: 'Sydney Opera House vibes.', avatar: 'https://picsum.photos/id/1025/50/50' },
-    { id: 4, top: '65%', left: '25%', title: 'Post from South America', content: 'Amazon rainforest adventure!', avatar: 'https://picsum.photos/id/1027/50/50' },
-];
+// Helper to convert lat/lng to pixel coordinates for a flat map
+const geoToPixel = (lat: number, lng: number) => {
+    const mapWidth = 500; // a base width for calculation
+    const mapHeight = 250; // a base height
+    const x = (lng + 180) * (mapWidth / 360);
+    const latRad = lat * Math.PI / 180;
+    const mercN = Math.log(Math.tan((Math.PI / 4) + (latRad / 2)));
+    const y = (mapHeight / 2) - (mapWidth * mercN / (2 * Math.PI));
+    return {
+        left: `${(x / mapWidth) * 100}%`,
+        top: `${(y / mapHeight) * 100}%`,
+    };
+};
+
 
 const GeoTimeline: React.FC = () => {
   const [activePin, setActivePin] = useState<Pin | null>(null);
+  const [pins, setPins] = useState<Pin[]>([]);
+
+  useEffect(() => {
+    const fetchGeotaggedPosts = async () => {
+        try {
+            const res = await fetch('/api/posts/geotagged');
+            const data: Post[] = await res.json();
+            const mappedPins = data.map(post => ({
+                ...post,
+                ...geoToPixel(post.latitude, post.longitude),
+            }));
+            setPins(mappedPins);
+        } catch (error) {
+            console.error("Failed to fetch geotagged posts", error);
+        }
+    };
+    fetchGeotaggedPosts();
+  }, []);
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 card">
@@ -43,7 +66,7 @@ const GeoTimeline: React.FC = () => {
                 key={pin.id}
                 className="absolute w-5 h-5 bg-orange-500 rounded-full border-2 border-white shadow-md transform -translate-x-1/2 -translate-y-1/2 transition-transform hover:scale-150" 
                 style={{ top: pin.top, left: pin.left }} 
-                title={pin.title}
+                title={pin.content}
                 onClick={() => setActivePin(pin)}
             ></button>
         ))}
@@ -58,7 +81,7 @@ const GeoTimeline: React.FC = () => {
                     <XIcon className="w-4 h-4"/>
                 </button>
                 <div className="flex items-center space-x-3">
-                    <img src={activePin.avatar} className="w-10 h-10 rounded-full" alt="avatar"/>
+                    <img src={activePin.user.avatar} className="w-10 h-10 rounded-full" alt="avatar"/>
                     <div>
                         <p className="text-sm font-semibold">{activePin.content}</p>
                     </div>

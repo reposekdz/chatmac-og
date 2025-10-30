@@ -5,9 +5,10 @@ import { View } from '../App';
 interface BottomNavProps {
     setView: (view: View) => void;
     activeView: View;
+    setCreatePostModalOpen: (isOpen: boolean) => void;
 }
 
-const BottomNav: React.FC<BottomNavProps> = ({ setView, activeView }) => {
+const BottomNav: React.FC<BottomNavProps> = ({ setView, activeView, setCreatePostModalOpen }) => {
     const navItems = [
         { view: 'home', icon: HomeIcon },
         { view: 'explore', icon: ExploreIcon },
@@ -22,11 +23,11 @@ const BottomNav: React.FC<BottomNavProps> = ({ setView, activeView }) => {
                 {navItems.map(item => (
                     <button 
                         key={item.view} 
-                        onClick={() => setView(item.view as View)}
+                        onClick={() => item.isCentral ? setCreatePostModalOpen(true) : setView(item.view as View)}
                         className={`p-2 rounded-full transition-colors ${item.isCentral ? '-mt-8' : ''}`}
                     >
                         {item.isCentral ? (
-                            <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-3 rounded-full text-white shadow-lg">
+                            <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-3 rounded-full text-white shadow-lg animate-pulse-subtle">
                                 <item.icon className="w-8 h-8"/>
                             </div>
                         ) : (

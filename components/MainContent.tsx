@@ -1,105 +1,101 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import PostCard from './PostCard';
-import CreatePost from './CreatePost';
-import StoryReel from './StoryReel';
+
+import React from 'react';
+import { View } from '../App';
 import { Post, Story } from '../types';
-import { loggedInUser } from '../App';
+import CreatePost from './CreatePost';
+import PostCard from './PostCard';
+import StoryReel from './StoryReel';
+import Explore from './Explore';
+import Notifications from './Notifications';
+import Messages from './Messages';
+import Marketplace from './Marketplace';
+import Challenges from './Challenges';
+import JourneyTracker from './JourneyTracker';
+import LocalRooms from './LocalRooms';
+import OpenStage from './OpenStage';
+import AdsManager from './AdsManager';
+import Profile from './Profile';
+import Settings from './Settings';
+import Bookmarks from './Bookmarks';
+import GeoTimeline from './GeoTimeline';
+import CreatorHub from './CreatorHub';
+import Events from './Events';
+import Groups from './Groups';
+import ReelsPage from './ReelsPage';
+import CreatePage from './CreatePage';
 
 interface MainContentProps {
-    addCoins: (amount: number) => void;
-    isAntiToxic: boolean;
-    profileMode: string;
-    setCreatePostModalOpen: (isOpen: boolean) => void;
+    view: View;
+    posts: Post[];
+    loading: boolean;
+    setPosts: React.Dispatch<React.SetStateAction<Post[]>>;
+    addPost: (newPost: Post) => void;
     setViewingStory: (view: { stories: Story[], startIndex: number } | null) => void;
+    setCreateStoryModalOpen: (isOpen: boolean) => void;
+    coins: number;
+    setCoins: (c: number | ((prev: number) => number)) => void;
+    openVideoCall: () => void;
 }
 
-const MainContent: React.FC<MainContentProps> = ({addCoins, isAntiToxic, setCreatePostModalOpen, setViewingStory}) => {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  const topics = ['Tech', 'Travel', 'Gaming', 'Food', 'Music', 'Art'];
-  const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set());
+const MainContent: React.FC<MainContentProps> = (props) => {
+    const { view, posts, loading, setPosts, addPost, setViewingStory, setCreateStoryModalOpen, coins, setCoins, openVideoCall } = props;
 
-  const fetchPosts = useCallback(async () => {
-    try {
-      setLoading(true);
-      // Pass logged in user ID to determine like status
-      const response = await fetch(`/api/posts?userId=${loggedInUser.id}`); 
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const data: Post[] = await response.json();
-      setPosts(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    const renderView = () => {
+        switch (view) {
+            case 'home':
+                return (
+                    <div className="space-y-6">
+                        <StoryReel setViewingStory={setViewingStory} setCreateStoryModalOpen={setCreateStoryModalOpen} />
+                        <CreatePost onPostCreated={addPost} />
+                        {loading ? (
+                            <p>Loading posts...</p>
+                        ) : (
+                            posts.map(post => <PostCard key={post.id} post={post} />)
+                        )}
+                    </div>
+                );
+            case 'explore':
+                return <Explore />;
+            case 'reels':
+                return <ReelsPage />;
+            case 'notifications':
+                return <Notifications />;
+            case 'messages':
+                return <Messages openVideoCall={openVideoCall} />;
+            case 'marketplace':
+                return <Marketplace coins={coins} setCoins={setCoins} />;
+            case 'challenges':
+                return <Challenges />;
+            case 'journey':
+                return <JourneyTracker />;
+            case 'rooms':
+                return <LocalRooms />;
+            case 'stage':
+                return <OpenStage />;
+            case 'ads':
+                return <AdsManager coins={coins} setCoins={setCoins} />;
+            case 'profile':
+                return <Profile />;
+            case 'settings':
+                return <Settings />;
+            case 'bookmarks':
+                return <Bookmarks />;
+            case 'groups':
+                return <Groups />;
+            case 'create':
+                 return <CreatePage setCreatePostModalOpen={() => { /* Handled by App.tsx */ }} setCreateStoryModalOpen={() => { /* Handled by App.tsx */ }} setCreateReelModalOpen={() => { /* Handled by App.tsx */ }} />;
+            default:
+                return (
+                     <div className="space-y-6">
+                        <StoryReel setViewingStory={setViewingStory} setCreateStoryModalOpen={setCreateStoryModalOpen} />
+                        <CreatePost onPostCreated={addPost} />
+                        {loading ? <p>Loading posts...</p> : posts.map(post => <PostCard key={post.id} post={post} />)}
+                    </div>
+                );
+        }
+    };
 
-  useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
-
-  const toggleTopic = (topic: string) => {
-      setSelectedTopics(prev => {
-          const newSet = new Set(prev);
-          if (newSet.has(topic)) {
-              newSet.delete(topic);
-          } else {
-              newSet.add(topic);
-          }
-          return newSet;
-      });
-  };
-  
-  const onPostCreated = (newPost: Post) => {
-      setPosts(prevPosts => [newPost, ...prevPosts]);
-  }
-
-  const filteredPosts = useMemo(() => {
-      if (selectedTopics.size === 0) {
-          return posts;
-      }
-      return posts.filter(post => 
-          post.topics?.some(topic => selectedTopics.has(topic))
-      );
-  }, [selectedTopics, posts]);
-  
-  return (
-    <div className="flex flex-col space-y-6">
-      <div className="lg:hidden">
-        <CreatePost onPostCreated={onPostCreated}/>
-      </div>
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 card">
-        <h3 className="font-bold text-lg mb-2 text-gray-900 dark:text-gray-100">Topic Fusion</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Combine topics to create your perfect feed.</p>
-        <div className="flex flex-wrap gap-2">
-            {topics.map(topic => (
-                <button 
-                  key={topic} 
-                  onClick={() => toggleTopic(topic)}
-                  className={`px-3 py-1 text-sm font-semibold rounded-full transition-colors ${selectedTopics.has(topic) ? 'bg-orange-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-orange-100 dark:hover:bg-orange-900/50 hover:text-orange-600'}`}
-                >
-                    {topic}
-                </button>
-            ))}
-        </div>
-      </div>
-      <StoryReel setViewingStory={setViewingStory} />
-      {loading && <div className="text-center py-12 text-gray-500 dark:text-gray-400">Loading posts...</div>}
-      {error && <div className="text-center py-12 text-red-500">Error fetching posts: {error}. Is the backend running?</div>}
-      {!loading && !error && filteredPosts.map((post) => (
-        <PostCard key={post.id} post={post} addCoins={addCoins} isAntiToxic={isAntiToxic} />
-      ))}
-      {!loading && !error && filteredPosts.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">No posts match your selected topics. Try selecting others!</p>
-          </div>
-      )}
-    </div>
-  );
+    return <div>{renderView()}</div>;
 };
 
 export default MainContent;

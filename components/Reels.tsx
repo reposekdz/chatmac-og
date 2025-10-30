@@ -2,17 +2,14 @@ import React from 'react';
 import { Reel, User } from '../types';
 import { FilmIcon } from './icons';
 
+// FIX: Corrected property name `videoUrl` to `video_url` and added missing properties
+// `user_id` and `created_at` to make the objects conform to the `Reel` type.
 const reelsData: Reel[] = [
-    // FIX: Added missing 'id' property to conform to User type.
-    { id: 1, user: { id: 4, name: 'ArtfulAdventures', handle: '@creativecanvas', avatar: 'https://picsum.photos/id/1011/50/50' }, videoUrl: 'https://picsum.photos/id/1011/200/300', caption: 'Painting process time-lapse!', views: 125000 },
-    // FIX: Added missing 'id' property to conform to User type.
-    { id: 2, user: { id: 2, name: 'FoodieFiesta', handle: '@tastytreats', avatar: 'https://picsum.photos/id/1025/50/50' }, videoUrl: 'https://picsum.photos/id/1025/200/300', caption: 'The perfect pizza flip.', views: 2.3 * 1000000 },
-    // FIX: Added missing 'id' property to conform to User type.
-    { id: 3, user: { id: 15, name: 'Sam Adventure', handle: '@samgoesplaces', avatar: 'https://picsum.photos/id/1015/50/50' }, videoUrl: 'https://picsum.photos/id/1015/200/300', caption: 'Cliff diving moments.', views: 890000 },
-    // FIX: Added missing 'id' property to conform to User type.
-    { id: 4, user: { id: 3, name: 'TechInnovator', handle: '@techguru', avatar: 'https://picsum.photos/id/1005/50/50' }, videoUrl: 'https://picsum.photos/id/1005/200/300', caption: 'Unboxing the new gadget.', views: 540000 },
-    // FIX: Added missing 'id' property to conform to User type.
-    { id: 5, user: { id: 1, name: 'Elena Rodriguez', handle: '@elenacodes', avatar: 'https://picsum.photos/id/1027/50/50' }, videoUrl: 'https://picsum.photos/id/1027/200/300', caption: 'Coding a new UI element!', views: 98000 },
+    { id: 1, user_id: 4, user: { id: 4, name: 'ArtfulAdventures', handle: '@creativecanvas', avatar: 'https://picsum.photos/id/1011/50/50' }, video_url: 'https://picsum.photos/id/1011/200/300', caption: 'Painting process time-lapse!', views: 125000, created_at: '2024-01-01T10:00:00Z' },
+    { id: 2, user_id: 2, user: { id: 2, name: 'FoodieFiesta', handle: '@tastytreats', avatar: 'https://picsum.photos/id/1025/50/50' }, video_url: 'https://picsum.photos/id/1025/200/300', caption: 'The perfect pizza flip.', views: 2.3 * 1000000, created_at: '2024-01-02T11:00:00Z' },
+    { id: 3, user_id: 15, user: { id: 15, name: 'Sam Adventure', handle: '@samgoesplaces', avatar: 'https://picsum.photos/id/1015/50/50' }, video_url: 'https://picsum.photos/id/1015/200/300', caption: 'Cliff diving moments.', views: 890000, created_at: '2024-01-03T12:00:00Z' },
+    { id: 4, user_id: 3, user: { id: 3, name: 'TechInnovator', handle: '@techguru', avatar: 'https://picsum.photos/id/1005/50/50' }, video_url: 'https://picsum.photos/id/1005/200/300', caption: 'Unboxing the new gadget.', views: 540000, created_at: '2024-01-04T13:00:00Z' },
+    { id: 5, user_id: 1, user: { id: 1, name: 'Elena Rodriguez', handle: '@elenacodes', avatar: 'https://picsum.photos/id/1027/50/50' }, video_url: 'https://picsum.photos/id/1027/200/300', caption: 'Coding a new UI element!', views: 98000, created_at: '2024-01-05T14:00:00Z' },
 ];
 
 const formatViews = (views: number) => {
@@ -24,7 +21,8 @@ const formatViews = (views: number) => {
 const ReelCard: React.FC<{ reel: Reel }> = ({ reel }) => {
     return (
         <div className="flex-shrink-0 w-32 h-56 rounded-2xl overflow-hidden relative group cursor-pointer shadow-md">
-            <img src={reel.videoUrl} alt={reel.caption} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            {/* FIX: Changed `videoUrl` to `video_url` to match the `Reel` type. */}
+            <img src={reel.video_url} alt={reel.caption} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
             <div className="absolute bottom-2 left-2 right-2 text-white">
                 <div className="flex items-center space-x-1.5 mb-1">

@@ -1,51 +1,70 @@
-import React, { useState } from 'react';
-import { User } from '../types';
-import { MapIcon, LinkIcon, CalendarIcon, MoreIcon } from './icons';
+
+import React, { useState, useEffect } from 'react';
+import { Post, User } from '../types';
+import { loggedInUser } from '../App';
 import PostCard from './PostCard';
+import { CalendarIcon, LinkIcon, MapIcon, CogIcon, StarIcon, ShieldCheckIcon } from './icons';
+import MonetizationModal from './MonetizationModal';
+import VerificationModal from './VerificationModal';
 
-interface ProfileProps {
-    user: User;
-}
+const Profile: React.FC = () => {
+    const [user] = useState<User>(loggedInUser);
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [isMonetizationModalOpen, setMonetizationModalOpen] = useState(false);
+    const [isVerificationModalOpen, setVerificationModalOpen] = useState(false);
 
-const Profile: React.FC<ProfileProps> = ({ user }) => {
-    const [activeTab, setActiveTab] = useState('posts');
-    
+    useEffect(() => {
+        fetch(`/api/posts?userId=${user.id}`)
+          .then(res => res.json())
+          .then(data => setPosts(data));
+    }, [user.id]);
+
     return (
-        <div className="flex flex-col space-y-6">
+        <>
             <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 card overflow-hidden">
-                <img src={user.banner} alt={`${user.name}'s banner`} className="w-full h-48 object-cover" />
+                <div className="h-48 bg-gray-200 dark:bg-gray-800">
+                    <img src="https://picsum.photos/seed/header/1200/400" className="w-full h-full object-cover" alt="Profile banner"/>
+                </div>
                 <div className="p-6">
-                    <div className="flex justify-between items-start -mt-20">
-                        <img src={user.avatar} alt={user.name} className="w-32 h-32 rounded-full border-4 border-white dark:border-gray-900"/>
-                        <div className="flex items-center space-x-2 mt-20">
-                            <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"><MoreIcon className="w-6 h-6"/></button>
-                            <button className="bg-orange-500 text-white font-bold py-2 px-4 rounded-full">Follow</button>
+                    <div className="flex justify-between items-start -mt-24">
+                        <img src={user.avatar} className="w-36 h-36 rounded-full border-4 border-white dark:border-gray-900" alt="Profile avatar"/>
+                        <div className="flex items-center space-x-2">
+                           <button onClick={() => setMonetizationModalOpen(true)} className="p-2 bg-yellow-400 text-white rounded-full hover:bg-yellow-500" title="Monetization">
+                                <StarIcon className="w-5 h-5"/>
+                            </button>
+                             <button onClick={() => setVerificationModalOpen(true)} className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600" title="Get Verified">
+                                <ShieldCheckIcon className="w-5 h-5"/>
+                            </button>
+                            <button className="font-bold py-2 px-4 rounded-full border-2 border-orange-500 text-orange-500">Edit Profile</button>
                         </div>
                     </div>
                     <div className="mt-4">
-                        <h1 className="text-2xl font-bold">{user.name}</h1>
+                        <h1 className="text-3xl font-bold">{user.name}</h1>
                         <p className="text-gray-500">{user.handle}</p>
                     </div>
-                    <p className="mt-2">{user.bio}</p>
-                    <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-                        <div className="flex items-center space-x-1"><MapIcon className="w-4 h-4"/><span>{user.location}</span></div>
-                        <a href="#" className="flex items-center space-x-1 hover:underline"><LinkIcon className="w-4 h-4"/><span>{user.website}</span></a>
-                        <div className="flex items-center space-x-1"><CalendarIcon className="w-4 h-4"/><span>{user.joinedDate}</span></div>
+                    <p className="mt-4">{user.bio}</p>
+                    <div className="flex items-center space-x-4 mt-4 text-sm text-gray-500">
+                        <div className="flex items-center space-x-1"><MapIcon className="w-4 h-4"/><span>San Francisco, CA</span></div>
+                        <div className="flex items-center space-x-1"><LinkIcon className="w-4 h-4"/><a>website.com</a></div>
+                        <div className="flex items-center space-x-1"><CalendarIcon className="w-4 h-4"/><span>Joined June 2023</span></div>
                     </div>
-                     <div className="mt-4 flex items-center space-x-6">
-                        <p><span className="font-bold">{user.stats?.following}</span> Following</p>
-                        <p><span className="font-bold">{user.stats?.followers}</span> Followers</p>
-                     </div>
+                     <div className="flex items-center space-x-6 mt-4">
+                        <p><span className="font-bold">{user.following_count}</span> <span className="text-gray-500">Following</span></p>
+                        <p><span className="font-bold">{user.followers_count}</span> <span className="text-gray-500">Followers</span></p>
+                    </div>
                 </div>
-                 <div className="border-t border-gray-200 dark:border-gray-800 flex">
-                    <button onClick={() => setActiveTab('posts')} className={`flex-1 p-3 font-semibold text-center ${activeTab === 'posts' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}>Posts</button>
-                    <button onClick={() => setActiveTab('replies')} className={`flex-1 p-3 font-semibold text-center ${activeTab === 'replies' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}>Replies</button>
-                    <button onClick={() => setActiveTab('media')} className={`flex-1 p-3 font-semibold text-center ${activeTab === 'media' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}>Media</button>
-                    <button onClick={() => setActiveTab('likes')} className={`flex-1 p-3 font-semibold text-center ${activeTab === 'likes' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}>Likes</button>
-                </div>
+                 <div className="border-t border-gray-200 dark:border-gray-800">
+                    {/* Add tabs for Posts, Replies, Media, Likes */}
+                 </div>
             </div>
-             {/* Posts would be fetched and displayed here based on active tab */}
-        </div>
+
+            <div className="mt-6 space-y-6">
+                {posts.map(post => <PostCard key={post.id} post={post} />)}
+            </div>
+
+            {isMonetizationModalOpen && <MonetizationModal user={user} onClose={() => setMonetizationModalOpen(false)} />}
+            {isVerificationModalOpen && <VerificationModal user={user} onClose={() => setVerificationModalOpen(false)} />}
+        </>
     );
 };
 

@@ -8,7 +8,8 @@ interface NavMenuModalProps {
 }
 
 const NavMenuModal: React.FC<NavMenuModalProps> = ({ onClose, setView }) => {
-     const navItems = [
+    // FIX: Explicitly type navItems to prevent TypeScript from widening the 'view' property to a generic string.
+     const navItems: { view: View; icon: React.ElementType; label: string }[] = [
         { view: 'home', icon: HomeIcon, label: 'Home' },
         { view: 'explore', icon: ExploreIcon, label: 'Explore' },
         { view: 'reels', icon: FilmIcon, label: 'Reels' },

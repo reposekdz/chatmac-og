@@ -2,19 +2,10 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Reel } from '../types';
 import { HeartIcon, ChatBubbleIcon, ShareIcon, MoreIcon, PlayIcon, SpeakerWaveIcon } from './icons';
 
-const reelsData: Reel[] = [
-    // FIX: Added missing 'id' property to conform to User type.
-    { id: 1, user: { id: 4, name: 'ArtfulAdventures', handle: '@creativecanvas', avatar: 'https://picsum.photos/id/1011/50/50' }, videoUrl: 'https://picsum.photos/id/1011/500/900', caption: 'Painting process time-lapse! So satisfying to watch the colors come together. #art #painting #timelapse', views: 125000 },
-    // FIX: Added missing 'id' property to conform to User type.
-    { id: 2, user: { id: 2, name: 'FoodieFiesta', handle: '@tastytreats', avatar: 'https://picsum.photos/id/1025/50/50' }, videoUrl: 'https://picsum.photos/id/1025/500/900', caption: 'The perfect pizza flip. It\'s all in the wrist! 🍕 #pizza #food #chef', views: 2.3 * 1000000 },
-    // FIX: Added missing 'id' property to conform to User type.
-    { id: 3, user: { id: 15, name: 'Sam Adventure', handle: '@samgoesplaces', avatar: 'https://picsum.photos/id/1015/50/50' }, videoUrl: 'https://picsum.photos/id/1015/500/900', caption: 'Cliff diving moments from my last trip. #travel #adventure #thrill', views: 890000 },
-];
-
 const ReelItem: React.FC<{ reel: Reel; isVisible: boolean }> = ({ reel, isVisible }) => {
     return (
         <div className="h-full w-full relative snap-start flex-shrink-0">
-            <img src={reel.videoUrl} className="w-full h-full object-cover" />
+            <img src={reel.video_url} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
 
             <div className="absolute bottom-4 left-4 right-16 text-white">
@@ -40,7 +31,25 @@ const ReelItem: React.FC<{ reel: Reel; isVisible: boolean }> = ({ reel, isVisibl
 
 const ReelsPage: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
+    const [reels, setReels] = useState<Reel[]>([]);
+    const [loading, setLoading] = useState(true);
     const [visibleReel, setVisibleReel] = useState(0);
+
+    useEffect(() => {
+        const fetchReels = async () => {
+            try {
+                const response = await fetch('/api/reels');
+                if (!response.ok) throw new Error('Failed to fetch reels');
+                const data = await response.json();
+                setReels(data);
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchReels();
+    }, []);
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -55,17 +64,21 @@ const ReelsPage: React.FC = () => {
             { threshold: 0.5 }
         );
 
-        const reels = containerRef.current?.querySelectorAll('.reel-item');
-        reels?.forEach(reel => observer.observe(reel));
+        const reelElements = containerRef.current?.querySelectorAll('.reel-item');
+        reelElements?.forEach(reel => observer.observe(reel));
 
         return () => {
-            reels?.forEach(reel => observer.unobserve(reel));
+            reelElements?.forEach(reel => observer.unobserve(reel));
         };
-    }, []);
+    }, [reels]);
+
+    if (loading) {
+        return <div className="h-[calc(100vh-10rem)] flex items-center justify-center"><p>Loading Reels...</p></div>
+    }
 
     return (
         <div ref={containerRef} className="h-[calc(100vh-10rem)] w-full max-w-sm mx-auto bg-black rounded-2xl overflow-y-auto snap-y snap-mandatory no-scrollbar">
-            {reelsData.map((reel, index) => (
+            {reels.map((reel, index) => (
                 <div key={reel.id} data-index={index} className="reel-item h-full w-full snap-start flex-shrink-0">
                     <ReelItem reel={reel} isVisible={index === visibleReel} />
                 </div>

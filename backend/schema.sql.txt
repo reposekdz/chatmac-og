@@ -1,1 +1,352 @@
-full contents of backend/schema.sql.txt
+
+-- Drop tables if they exist to start fresh
+DROP TABLE IF EXISTS story_highlights, highlights, challenge_submissions, user_achievements, achievements, challenges, poll_votes, poll_options, polls, reports, verification_applications, subscriptions, bookmarks, post_likes, story_comments, story_likes, comments, notifications, messages, conversation_participants, conversations, marketplace_listings, reels, stories, followers, posts, users;
+
+-- Users Table
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    handle VARCHAR(255) UNIQUE NOT NULL,
+    avatar VARCHAR(255) DEFAULT 'https://picsum.photos/seed/default/100/100',
+    bio TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_verified BOOLEAN DEFAULT FALSE,
+    is_monetized BOOLEAN DEFAULT FALSE,
+    subscription_price INT DEFAULT 5,
+    coins INT DEFAULT 1000,
+    status_emoji VARCHAR(10) DEFAULT '👋'
+);
+
+-- Followers Table (for follow relationships)
+CREATE TABLE followers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    follower_id INT NOT NULL,
+    following_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY (follower_id, following_id)
+);
+
+-- Polls, Options, and Votes
+CREATE TABLE polls (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE poll_options (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    poll_id INT NOT NULL,
+    text VARCHAR(255) NOT NULL,
+    FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE
+);
+
+CREATE TABLE poll_votes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    poll_id INT NOT NULL,
+    option_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE,
+    FOREIGN KEY (option_id) REFERENCES poll_options(id) ON DELETE CASCADE,
+    UNIQUE KEY (user_id, poll_id)
+);
+
+-- Posts Table
+CREATE TABLE posts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    content TEXT NOT NULL,
+    image_url VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    latitude DECIMAL(10, 8),
+    longitude DECIMAL(11, 8),
+    poll_id INT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE SET NULL
+);
+
+-- Comments Table
+CREATE TABLE comments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Post Likes Table
+CREATE TABLE post_likes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY (post_id, user_id)
+);
+
+-- Bookmarks Table
+CREATE TABLE bookmarks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    post_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    UNIQUE KEY (user_id, post_id)
+);
+
+-- Stories Table
+CREATE TABLE stories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    image_url VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Story Likes Table
+CREATE TABLE story_likes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    story_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (story_id) REFERENCES stories(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY (story_id, user_id)
+);
+
+-- Story Comments Table
+CREATE TABLE story_comments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    story_id INT NOT NULL,
+    user_id INT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (story_id) REFERENCES stories(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Highlights Table
+CREATE TABLE highlights (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    cover_image_url VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Story Highlights Table (many-to-many relationship)
+CREATE TABLE story_highlights (
+    highlight_id INT NOT NULL,
+    story_id INT NOT NULL,
+    PRIMARY KEY (highlight_id, story_id),
+    FOREIGN KEY (highlight_id) REFERENCES highlights(id) ON DELETE CASCADE,
+    FOREIGN KEY (story_id) REFERENCES stories(id) ON DELETE CASCADE
+);
+
+-- Reels Table
+CREATE TABLE reels (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    video_url VARCHAR(255) NOT NULL,
+    caption TEXT,
+    views INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Marketplace Listings Table
+CREATE TABLE marketplace_listings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    seller_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price INT NOT NULL,
+    image_url VARCHAR(255),
+    is_sold BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (seller_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Conversations and Messages
+CREATE TABLE conversations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE conversation_participants (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    conversation_id INT NOT NULL,
+    user_id INT NOT NULL,
+    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY (conversation_id, user_id)
+);
+
+CREATE TABLE messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    conversation_id INT NOT NULL,
+    sender_id INT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Notifications Table
+CREATE TABLE notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    actor_id INT NOT NULL,
+    type ENUM('like', 'comment', 'follow', 'mention', 'system', 'marketplace_purchase', 'achievement_unlocked') NOT NULL,
+    entity_id INT, -- e.g., post_id, story_id, achievement_id
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Subscriptions Table
+CREATE TABLE subscriptions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    subscriber_id INT NOT NULL,
+    creator_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP,
+    FOREIGN KEY (subscriber_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY (subscriber_id, creator_id)
+);
+
+-- Verification Applications Table
+CREATE TABLE verification_applications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    reason TEXT,
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Reports Table
+CREATE TABLE reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    reporter_id INT NOT NULL,
+    entity_type ENUM('post', 'user', 'comment') NOT NULL,
+    entity_id INT NOT NULL,
+    reason TEXT,
+    status ENUM('pending', 'reviewed') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Challenges Table
+CREATE TABLE challenges (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    icon VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE challenge_submissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    challenge_id INT NOT NULL,
+    user_id INT NOT NULL,
+    post_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (challenge_id) REFERENCES challenges(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    UNIQUE KEY (challenge_id, user_id)
+);
+
+-- Achievements Table
+CREATE TABLE achievements (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    icon VARCHAR(255) NOT NULL,
+    `key` VARCHAR(255) UNIQUE NOT NULL -- e.g., 'FIRST_POST', '100_FOLLOWERS'
+);
+
+CREATE TABLE user_achievements (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    achievement_id INT NOT NULL,
+    achieved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (achievement_id) REFERENCES achievements(id) ON DELETE CASCADE,
+    UNIQUE KEY (user_id, achievement_id)
+);
+
+-- Events Table
+CREATE TABLE events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    date DATETIME NOT NULL,
+    location VARCHAR(255),
+    image_url VARCHAR(255)
+);
+
+
+-- Insert initial data
+INSERT INTO users (id, name, handle, avatar, bio, is_verified, coins, status_emoji) VALUES
+(1, 'Jane Doe', '@janedoe', 'https://picsum.photos/id/1005/100/100', 'Just a simple developer exploring the world. SF -> NY.', TRUE, 15000, '🚀'),
+(2, 'TechInnovator', '@techguru', 'https://picsum.photos/id/1011/100/100', 'Exploring the future of tech.', TRUE, 500, '💡'),
+(3, 'ArtfulAdventures', '@creativecanvas', 'https://picsum.photos/id/1025/100/100', 'Artist and world traveler.', FALSE, 1200, '🎨'),
+(4, 'FoodieFiesta', '@tastytreats', 'https://picsum.photos/id/1015/100/100', 'Eating my way through the city.', FALSE, 8000, '🍕');
+
+INSERT INTO posts (user_id, content, image_url, created_at, latitude, longitude) VALUES
+(2, 'Just unboxed the new Quantum Pro laptop. The screen is absolutely stunning! Review coming soon. #tech #unboxing', 'https://picsum.photos/seed/tech/800/600', '2024-05-20 10:00:00', 34.052235, -118.243683),
+(3, 'Morning light in the studio. There''s nothing more inspiring. #art #painting', 'https://picsum.photos/seed/art/800/600', '2024-05-20 09:30:00', 40.712776, -74.005974),
+(4, 'Found the best tacos in the Mission District! The carnitas are a must-try. 🌮', 'https://picsum.photos/seed/taco/800/600', '2024-05-19 18:00:00', 37.759770, -122.414490),
+(1, 'Coding away on a beautiful Sunday afternoon. This new component library is a game-changer.', NULL, '2024-05-19 15:00:00', NULL, NULL);
+
+INSERT INTO stories (user_id, image_url) VALUES
+(2, 'https://picsum.photos/id/10/400/800'),
+(3, 'https://picsum.photos/id/20/400/800'),
+(4, 'https://picsum.photos/id/30/400/800'),
+(1, 'https://picsum.photos/id/40/400/800');
+
+INSERT INTO reels (user_id, video_url, caption, views) VALUES
+(3, 'https://picsum.photos/id/1011/200/300', 'Painting process time-lapse!', 125000),
+(4, 'https://picsum.photos/id/1025/200/300', 'The perfect pizza flip.', 2300000),
+(2, 'https://picsum.photos/id/1005/200/300', 'Unboxing the new gadget.', 540000);
+
+INSERT INTO marketplace_listings (seller_id, name, description, price, image_url) VALUES
+(3, 'Hand-painted Abstract Canvas', 'A beautiful 24x36 inch acrylic painting. Perfect for any modern home.', 8000, 'https://picsum.photos/seed/painting/300/300'),
+(2, 'Vintage Mechanical Keyboard', 'A fully restored 1980s mechanical keyboard with Cherry MX Blue switches.', 1500, 'https://picsum.photos/seed/keyboard/300/300');
+
+INSERT INTO conversations (id) VALUES (1), (2);
+INSERT INTO conversation_participants (conversation_id, user_id) VALUES (1, 1), (1, 2), (2, 1), (2, 3);
+INSERT INTO messages (conversation_id, sender_id, content) VALUES
+(1, 2, 'Hey! Loved your latest post about the new laptop.'),
+(1, 1, 'Thanks! It''s been really great to work with so far.'),
+(2, 3, 'Saw you were in the Mission. You have to try the pupusas next time!'),
+(2, 1, 'Ooh, good call. Adding it to my list!');
+
+INSERT INTO notifications (user_id, actor_id, type, entity_id) VALUES
+(2, 3, 'like', 2),
+(2, 4, 'comment', 2),
+(1, 3, 'follow', NULL);
+
+INSERT INTO events (title, date, location, image_url) VALUES
+('Tech Conference 2024', '2024-08-15 09:00:00', 'Moscone Center, SF', 'https://picsum.photos/seed/event1/400/200'),
+('Community Art Walk', '2024-06-10 18:00:00', 'Downtown Arts District', 'https://picsum.photos/seed/event2/400/200');
+
+INSERT INTO challenges (id, title, description, icon) VALUES 
+(1, 'Golden Hour Photo', 'Share your best sunset or sunrise picture.', 'ImageIcon'),
+(2, 'Two-Sentence Story', 'Write a compelling story in just two sentences.', 'ChatBubbleIcon');
+
+INSERT INTO achievements (id, name, description, icon, `key`) VALUES
+(1, 'First Post', 'You shared your first thought with the world!', 'StarIcon', 'FIRST_POST'),
+(2, 'Welcome Aboard', 'You joined the ChatMac community!', 'HeartIcon', 'JOINED_APP');

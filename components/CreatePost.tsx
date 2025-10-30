@@ -1,14 +1,39 @@
 import React, { useState } from 'react';
 import { Post } from '../types';
 import { loggedInUser } from '../App';
-import { ImageIcon, PollIcon, PaperAirplaneIcon, EmojiHappyIcon, PaperclipIcon } from './icons';
+import { ImageIcon, PollIcon, PaperAirplaneIcon, EmojiHappyIcon, PaperclipIcon, MapIcon } from './icons';
 
 interface CreatePostProps {
     onPostCreated: (newPost: Post) => void;
 }
 
+interface Location {
+    latitude: number;
+    longitude: number;
+}
+
 const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated }) => {
     const [content, setContent] = useState('');
+    const [location, setLocation] = useState<Location | null>(null);
+    const [isLocating, setIsLocating] = useState(false);
+
+    const handleAddLocation = () => {
+        setIsLocating(true);
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setLocation({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                });
+                setIsLocating(false);
+            },
+            (error) => {
+                console.error("Geolocation error:", error);
+                alert("Could not get location.");
+                setIsLocating(false);
+            }
+        );
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -17,6 +42,8 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated }) => {
         const newPostData = {
             userId: loggedInUser.id,
             content: content.trim(),
+            latitude: location?.latitude,
+            longitude: location?.longitude,
         };
 
         try {
@@ -35,6 +62,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated }) => {
             const createdPost: Post = await response.json();
             onPostCreated(createdPost);
             setContent('');
+            setLocation(null);
         } catch (error) {
             console.error("Error creating post:", error);
         }
@@ -53,6 +81,11 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated }) => {
                             className="w-full bg-transparent text-lg resize-none focus:outline-none placeholder-gray-500 dark:placeholder-gray-400"
                             rows={2}
                         />
+                        {location && (
+                            <div className="text-xs text-green-600 font-semibold bg-green-100 dark:bg-green-900/50 rounded-full px-2 py-1 inline-flex items-center">
+                                <MapIcon className="w-3 h-3 mr-1"/> Location Added
+                            </div>
+                        )}
                     </div>
                 </div>
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
@@ -61,6 +94,9 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated }) => {
                         <button type="button" className="p-2 rounded-full hover:bg-orange-100 dark:hover:bg-orange-900/50"><PaperclipIcon className="w-6 h-6" /></button>
                         <button type="button" className="p-2 rounded-full hover:bg-orange-100 dark:hover:bg-orange-900/50"><PollIcon className="w-6 h-6" /></button>
                         <button type="button" className="p-2 rounded-full hover:bg-orange-100 dark:hover:bg-orange-900/50"><EmojiHappyIcon className="w-6 h-6" /></button>
+                         <button type="button" onClick={handleAddLocation} disabled={isLocating} className="p-2 rounded-full hover:bg-orange-100 dark:hover:bg-orange-900/50 disabled:opacity-50">
+                            <MapIcon className="w-6 h-6" />
+                        </button>
                     </div>
                     <button
                         type="submit"
