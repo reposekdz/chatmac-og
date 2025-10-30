@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Socket } from 'socket.io-client';
 import { View } from '../App';
-import { Post, Story, User } from '../types';
+import { Post, Story, User, ServerToClientEvents, ClientToServerEvents } from '../types';
 import CreatePost from './CreatePost';
 import PostCard from './PostCard';
 import StoryReel from './StoryReel';
@@ -83,7 +84,7 @@ interface MainContentProps {
     setPosts: React.Dispatch<React.SetStateAction<Post[]>>;
     postsVersion: number;
     refreshPosts: () => void;
-    socket: Socket;
+    socket: Socket<ServerToClientEvents, ClientToServerEvents>;
 }
 
 const MainContent: React.FC<MainContentProps> = (props) => {

@@ -1,13 +1,14 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Socket } from 'socket.io-client';
-import { User } from '../types';
+import { User, ServerToClientEvents, ClientToServerEvents } from '../types';
 import { XIcon, MicrophoneIcon, VideoCameraIcon, PhoneIcon } from './icons';
 import { loggedInUser } from '../App';
 
 interface VideoCallModalProps {
     onClose: () => void;
     user: User;
-    socket: Socket;
+    socket: Socket<ServerToClientEvents, ClientToServerEvents>;
     isReceiving?: boolean;
     offer?: any;
 }

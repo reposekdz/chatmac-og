@@ -1,3 +1,4 @@
+
 export interface User {
     id: number;
     name: string;
@@ -167,4 +168,31 @@ export interface Notification {
     created_at: string;
     is_read: boolean;
     entity_id?: number;
+}
+
+// FIX: Add types for socket.io events to fix type errors throughout the app.
+export interface ServerToClientEvents {
+  connect: () => void;
+  newNotification: (notification: Notification) => void;
+  'video-offer': (data: { offer: any; senderId: number }) => void;
+  userOnline: (userId: number) => void;
+  userOffline: (userId: number) => void;
+  typing: () => void;
+  stopTyping: () => void;
+  newMessage: (message: Message) => void;
+  'video-answer': (data: { answer: any }) => void;
+  'ice-candidate': (data: { candidate: any }) => void;
+  'call-ended': () => void;
+}
+
+export interface ClientToServerEvents {
+  register: (userId: number) => void;
+  getOnlineUsers: (callback: (users: number[]) => void) => void;
+  joinRoom: (roomName: string) => void;
+  'video-offer': (data: { recipientId: number; senderId: number; offer: any }) => void;
+  'video-answer': (data: { recipientId: number; answer: any }) => void;
+  'ice-candidate': (data: { recipientId: number; candidate: any }) => void;
+  'end-call': (data: { recipientId: number }) => void;
+  typing: (data: { room: string }) => void;
+  stopTyping: (data: { room: string }) => void;
 }

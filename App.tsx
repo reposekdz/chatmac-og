@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import io, { Socket } from 'socket.io-client';
 import Header from './components/Header';
@@ -12,7 +13,7 @@ import StoryViewer from './components/StoryViewer';
 import StoryCommentsModal from './components/StoryCommentsModal';
 import VideoCallModal from './components/VideoCallModal';
 import Toast from './components/Toast';
-import { User, Post, Story, StoryComment, Achievement, Notification } from './types';
+import { User, Post, Story, StoryComment, Achievement, Notification, ServerToClientEvents, ClientToServerEvents } from './types';
 
 export const loggedInUser: User = {
     id: 1,
@@ -35,7 +36,8 @@ export type View = 'home' | 'explore' | 'notifications' | 'messages' | 'bookmark
 export type Theme = 'light' | 'dark' | 'retro';
 export type Mood = 'default' | 'chill' | 'focus' | 'hype';
 
-const socket: Socket = io('http://localhost:3000');
+// FIX: Correctly type the socket instance with server and client events.
+const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io('http://localhost:3000');
 
 function App() {
   const [view, setView] = useState<View>('home');

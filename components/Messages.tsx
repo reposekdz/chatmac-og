@@ -1,13 +1,44 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Socket } from 'socket.io-client';
-import { Conversation, Message, User } from '../types';
-import { SearchIcon, PaperAirplaneIcon, MoreIcon, VideoCameraIcon } from './icons';
+import { Conversation, Message, User, ServerToClientEvents, ClientToServerEvents } from '../types';
+import { SearchIcon, PaperAirplaneIcon, MoreIcon, VideoCameraIcon, PaintBrushIcon, PaperclipIcon, EmojiHappyIcon } from './icons';
 import { loggedInUser } from '../App';
 
 interface MessagesProps {
   openVideoCall: (user: User) => void;
-  socket: Socket;
+  socket: Socket<ServerToClientEvents, ClientToServerEvents>;
 }
+
+const themes = {
+    default: {
+        bg: 'bg-white dark:bg-gray-900',
+        outgoing: 'bg-orange-500 text-white',
+        incoming: 'bg-gray-100 dark:bg-gray-800',
+    },
+    ocean: {
+        bg: 'bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-indigo-900',
+        outgoing: 'bg-blue-500 text-white',
+        incoming: 'bg-white/80 dark:bg-blue-950/80',
+    },
+    mint: {
+        bg: 'bg-gradient-to-br from-green-50 to-teal-100 dark:from-gray-900 dark:to-teal-900/50',
+        outgoing: 'bg-green-500 text-white',
+        incoming: 'bg-white dark:bg-gray-800',
+    },
+    sunset: {
+        bg: 'bg-gradient-to-br from-red-100 via-yellow-100 to-orange-100 dark:from-red-900/50 dark:to-yellow-900/50',
+        outgoing: 'bg-red-500 text-white',
+        incoming: 'bg-white/80 dark:bg-gray-800/80',
+    },
+    midnight: {
+        bg: 'bg-gray-800 dark:bg-black',
+        outgoing: 'bg-purple-600 text-white',
+        incoming: 'bg-gray-700 dark:bg-gray-900',
+    }
+};
+
+type ThemeName = keyof typeof themes;
 
 const Messages: React.FC<MessagesProps> = ({ openVideoCall, socket }) => {
     const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -15,7 +46,14 @@ const Messages: React.FC<MessagesProps> = ({ openVideoCall, socket }) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [onlineUsers, setOnlineUsers] = useState<number[]>([]);
+    const [isTyping, setIsTyping] = useState(false);
+    const [chatThemes, setChatThemes] = useState<Record<number, ThemeName>>({});
+    const [isThemePickerOpen, setThemePickerOpen] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    // FIX: Replace NodeJS.Timeout with a browser-compatible type.
+    const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const activeTheme = themes[chatThemes[activeConversation?.id || 0] || 'default'];
 
     const fetchConversations = async () => {
         try {
@@ -54,8 +92,15 @@ const Messages: React.FC<MessagesProps> = ({ openVideoCall, socket }) => {
         if (!activeConversation) return;
 
         socket.emit('joinRoom', `conversation:${activeConversation.id}`);
+        
+        const handleTyping = () => setIsTyping(true);
+        const handleStopTyping = () => setIsTyping(false);
+
+        socket.on('typing', handleTyping);
+        socket.on('stopTyping', handleStopTyping);
 
         const fetchMessages = async () => {
+            setIsTyping(false);
             try {
                 const res = await fetch(`/api/conversations/${activeConversation.id}/messages`);
                 if (!res.ok) throw new Error('Failed to fetch messages');
@@ -71,6 +116,7 @@ const Messages: React.FC<MessagesProps> = ({ openVideoCall, socket }) => {
         const handleNewMessage = (message: Message) => {
             if (message.conversation_id === activeConversation.id) {
                 setMessages(prev => [message, ...prev]);
+                setIsTyping(false); // Stop showing typing indicator when message arrives
             }
         };
 
@@ -78,6 +124,8 @@ const Messages: React.FC<MessagesProps> = ({ openVideoCall, socket }) => {
 
         return () => {
             socket.off('newMessage', handleNewMessage);
+            socket.off('typing', handleTyping);
+            socket.off('stopTyping', handleStopTyping);
         };
 
     }, [activeConversation]);
@@ -89,8 +137,10 @@ const Messages: React.FC<MessagesProps> = ({ openVideoCall, socket }) => {
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newMessage.trim() || !activeConversation) return;
-
-        // Optimistic update is now handled by the server echoing the message back via socket
+        
+        socket.emit('stopTyping', { room: `conversation:${activeConversation.id}` });
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        
         setNewMessage('');
 
         try {
@@ -102,6 +152,28 @@ const Messages: React.FC<MessagesProps> = ({ openVideoCall, socket }) => {
         } catch (error) {
             console.error('Failed to send message:', error);
         }
+    };
+
+    const handleTypingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setNewMessage(e.target.value);
+        if (!socket || !activeConversation) return;
+
+        if (e.target.value.trim().length > 0) {
+            socket.emit('typing', { room: `conversation:${activeConversation.id}` });
+            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+            typingTimeoutRef.current = setTimeout(() => {
+                 socket.emit('stopTyping', { room: `conversation:${activeConversation.id}` });
+            }, 3000); // Stop typing after 3 seconds of inactivity
+        } else {
+            socket.emit('stopTyping', { room: `conversation:${activeConversation.id}` });
+            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        }
+    };
+
+    const handleThemeChange = (themeName: ThemeName) => {
+        if (!activeConversation) return;
+        setChatThemes(prev => ({ ...prev, [activeConversation.id]: themeName }));
+        setThemePickerOpen(false);
     };
     
     const timeAgo = (dateString: string) => {
@@ -148,15 +220,27 @@ const Messages: React.FC<MessagesProps> = ({ openVideoCall, socket }) => {
                 </div>
             </div>
             {/* Active Chat */}
-            <div className="w-2/3 flex flex-col">
+            <div className={`w-2/3 flex flex-col transition-colors duration-500 ${activeTheme.bg}`}>
                 {activeConversation ? (
                     <>
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
+                        <div className="p-4 border-b border-gray-200/50 dark:border-gray-800/50 flex justify-between items-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
                             <div>
                                 <p className="font-bold">{activeConversation.participant.name}</p>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">{activeConversation.participant.handle}</p>
+                                <div className="text-sm text-gray-500 dark:text-gray-400 h-5">
+                                    {isTyping ? <span className="italic">typing...</span> : <span>{activeConversation.participant.handle}</span>}
+                                </div>
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 relative">
+                                <button onClick={() => setThemePickerOpen(p => !p)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"><PaintBrushIcon className="w-6 h-6"/></button>
+                                {isThemePickerOpen && (
+                                    <div className="absolute top-full right-0 mt-2 bg-white dark:bg-gray-800 shadow-lg rounded-lg p-2 border border-gray-200 dark:border-gray-700 z-10">
+                                        <div className="grid grid-cols-5 gap-2">
+                                            {Object.entries(themes).map(([name, theme]) => (
+                                                <button key={name} onClick={() => handleThemeChange(name as ThemeName)} className={`w-8 h-8 rounded-full ${theme.outgoing}`}></button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                                 <button onClick={() => openVideoCall(activeConversation.participant)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"><VideoCameraIcon className="w-6 h-6"/></button>
                                 <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"><MoreIcon className="w-6 h-6"/></button>
                             </div>
@@ -165,7 +249,7 @@ const Messages: React.FC<MessagesProps> = ({ openVideoCall, socket }) => {
                             <div className="space-y-4">
                                 {messages.map(msg => (
                                     <div key={msg.id} className={`flex ${msg.sender_id === loggedInUser.id ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`max-w-xs lg:max-w-md p-3 rounded-2xl ${msg.sender_id === loggedInUser.id ? 'bg-orange-500 text-white rounded-br-none' : 'bg-gray-100 dark:bg-gray-800 rounded-bl-none'}`}>
+                                        <div className={`max-w-xs lg:max-w-md p-3 rounded-2xl ${msg.sender_id === loggedInUser.id ? `${activeTheme.outgoing} rounded-br-none` : `${activeTheme.incoming} rounded-bl-none`}`}>
                                             <p>{msg.content}</p>
                                         </div>
                                     </div>
@@ -173,10 +257,12 @@ const Messages: React.FC<MessagesProps> = ({ openVideoCall, socket }) => {
                                 <div ref={messagesEndRef} />
                             </div>
                         </div>
-                        <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-                            <form onSubmit={handleSendMessage} className="relative">
-                                <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type a message..." className="w-full bg-gray-100 dark:bg-gray-800 rounded-full pl-4 pr-12 py-3 text-sm"/>
-                                <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-orange-500 text-white rounded-full">
+                        <div className="p-4 border-t border-gray-200/50 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
+                            <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
+                                <button type="button" className="p-2 text-gray-500 hover:text-orange-500"><PaperclipIcon className="w-6 h-6"/></button>
+                                <button type="button" className="p-2 text-gray-500 hover:text-orange-500"><EmojiHappyIcon className="w-6 h-6"/></button>
+                                <input type="text" value={newMessage} onChange={handleTypingChange} placeholder="Type a message..." className="w-full bg-gray-100 dark:bg-gray-800 rounded-full pl-4 pr-4 py-3 text-sm"/>
+                                <button type="submit" className="p-3 bg-orange-500 text-white rounded-full hover:bg-orange-600 disabled:bg-orange-300" disabled={!newMessage.trim()}>
                                     <PaperAirplaneIcon className="w-6 h-6"/>
                                 </button>
                             </form>
